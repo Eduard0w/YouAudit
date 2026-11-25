@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +28,10 @@ public final class ServidorHttpLocal implements AutoCloseable {
     private final HttpServer servidor;
     private final Map<String, Resposta> rotas = new ConcurrentHashMap<>();
     private final List<String> pedidos = new CopyOnWriteArrayList<>();
+    private final Map<String, Deque<Resposta>> sequencias = new ConcurrentHashMap<>();
     private volatile String ultimoUserAgent;
+    private volatile String ultimoCorpo;
+    private volatile Map<String, List<String>> ultimosCabecalhos = Map.of();
 
     private ServidorHttpLocal(HttpServer servidor) {
         this.servidor = servidor;
@@ -45,6 +50,12 @@ public final class ServidorHttpLocal implements AutoCloseable {
 
     public ServidorHttpLocal responder(String caminho, int status, String tipo, String corpo) {
         rotas.put(caminho, new Resposta(status, tipo, corpo, null));
+        return this;
+    }
+
+    /** As próximas chamadas a {@code caminho} recebem estas respostas, na ordem; depois, a resposta fixa da rota. */
+    public synchronized ServidorHttpLocal emSequencia(String caminho, int status, String tipo, String corpo) {
+        sequencias.computeIfAbsent(caminho, c -> new ArrayDeque<>()).add(new Resposta(status, tipo, corpo, null));
         return this;
     }
 
@@ -74,6 +85,18 @@ public final class ServidorHttpLocal implements AutoCloseable {
         return ultimoUserAgent;
     }
 
+    public String ultimoCorpo() {
+        return ultimoCorpo;
+    }
+
+    /** Valor do cabeçalho recebido na última requisição (o nome é comparado sem diferenciar maiúsculas). */
+    public String ultimoCabecalho(String nome) {
+        return ultimosCabecalhos.entrySet().stream()
+                .filter(e -> e.getKey().equalsIgnoreCase(nome))
+                .map(e -> e.getValue().get(0))
+                .findFirst().orElse(null);
+    }
+
     /** Lê um arquivo de src/test/resources (ex.: "/paginas/pagina-longa.html"). */
     public static String recurso(String caminho) {
         try (InputStream entrada = ServidorHttpLocal.class.getResourceAsStream(caminho)) {
@@ -90,7 +113,16 @@ public final class ServidorHttpLocal implements AutoCloseable {
         String caminho = troca.getRequestURI().getRawPath();
         pedidos.add(caminho);
         ultimoUserAgent = troca.getRequestHeaders().getFirst("User-Agent");
-        Resposta resposta = rotas.getOrDefault(caminho, new Resposta(404, "text/plain", "não encontrado", null));
+        ultimosCabecalhos = Map.copyOf(troca.getRequestHeaders());
+        ultimoCorpo = new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        Resposta resposta;
+        synchronized (this) {
+            Deque<Resposta> sequencia = sequencias.get(caminho);
+            resposta = sequencia != null && !sequencia.isEmpty() ? sequencia.poll() : null;
+        }
+        if (resposta == null) {
+            resposta = rotas.getOrDefault(caminho, new Resposta(404, "text/plain", "não encontrado", null));
+        }
         byte[] corpo = resposta.corpo().getBytes(StandardCharsets.UTF_8);
         troca.getResponseHeaders().set("Content-Type", resposta.tipo());
         if (resposta.location() != null) {
