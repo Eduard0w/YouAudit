@@ -1,7 +1,9 @@
 -- Regras e pesos iniciais (CONTRATOS.md §2). Os pesos são ILUSTRATIVOS e configuráveis:
--- para mudar a pontuação, mude aqui (ou na tabela), nunca no código Java.
+-- para mudar a pontuação, mude aqui, nunca no código Java (mudança feita direto na tabela volta a este valor no próximo início).
 -- fonte = 'hipótese de trabalho' porque nenhum peso foi validado com dados reais.
-INSERT INTO regra (codigo, descricao, peso, ativa, fonte) VALUES
+-- MERGE ... KEY(codigo): o banco é um arquivo e este script roda a cada início. Se a regra já existe, atualiza;
+-- senão, insere. Com INSERT, o segundo início quebraria (codigo é único). Este arquivo é a fonte dos pesos.
+MERGE INTO regra (codigo, descricao, peso, ativa, fonte) KEY (codigo) VALUES
 ('TERMO_PROIBIDO', 'Termo da lista de proibições', 30, TRUE, 'hipótese de trabalho'),
 ('PROMESSA_RESULTADO_SEM_RESSALVA', 'Promessa de resultado sem aviso de que resultados variam', 20, TRUE, 'hipótese de trabalho'),
 ('RECONHECIMENTO_SEM_COMPROVANTE', 'Reconhecimento oficial sem comprovante anexado', 25, TRUE, 'hipótese de trabalho'),
