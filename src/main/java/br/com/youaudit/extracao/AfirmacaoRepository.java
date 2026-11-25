@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AfirmacaoRepository extends JpaRepository<Afirmacao, Long> {
 
     List<Afirmacao> findByAuditoriaId(Long auditoriaId);
+
+    void deleteByAuditoriaId(Long auditoriaId);
 }
