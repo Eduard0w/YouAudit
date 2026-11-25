@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouAudit — protótipo</title>
+  <style>
+    :root { --borda: #d0d4da; --fundo: #f6f7f9; --texto: #1d232b; --suave: #5b6573; --azul: #1f5fbf; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--texto); background: #fff; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 17px; margin: 28px 0 10px; }
+    .subtitulo { color: var(--suave); margin: 0 0 16px; }
+    .aviso { background: #fff6db; border: 1px solid #e8c45c; border-radius: 6px; padding: 10px 14px; }
+    .aviso strong { display: block; }
+    form, .painel { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input[type=url] { flex: 1 1 420px; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; font: inherit; }
+    button { padding: 8px 14px; border: 1px solid var(--azul); background: var(--azul); color: #fff; border-radius: 6px; font: inherit; cursor: pointer; }
+    button.secundario { background: #fff; color: var(--azul); }
+    button:disabled { opacity: .6; cursor: progress; }
+    .resultado { margin-top: 8px; color: var(--suave); min-height: 1.5em; }
+    .resultado.erro { color: #a3231f; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+    th { font-size: 13px; color: var(--suave); font-weight: 600; background: var(--fundo); }
+    td.num { font-variant-numeric: tabular-nums; }
+    .etiqueta { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid; }
+    .entrada-EVENTO { color: #5b3ea8; border-color: #b7a6e3; background: #f3effc; }
+    .entrada-LINK { color: #0f6b5c; border-color: #93cfc3; background: #eaf7f4; }
+    .origem-REAL { color: #8a4b00; border-color: #e5b47a; background: #fdf3e6; }
+    .origem-SIMULADO { color: #3d4a5c; border-color: #b8c0cc; background: #eef1f5; }
+    .motivo { color: var(--suave); font-size: 13px; }
+    .vazio { color: var(--suave); padding: 14px 8px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>YouAudit</h1>
+  <p class="subtitulo">Promessas da página de venda × regras e entrega. Os alertas são indícios para revisão humana: o sistema não aprova nem reprova produto.</p>
+
+  <div class="aviso" role="note">
+    <strong>Protótipo com gatilho simulado.</strong>
+    O evento "produto enviado para aprovação" é simulado. Itens <b>SIMULADO</b> são fictícios. Itens <b>REAL</b> vêm de
+    páginas públicas e aparecem só com id anônimo (pagina-NN, link-NN). Os dois nunca entram juntos numa mesma métrica.
+  </div>
+
+  <h2>Auditar um link</h2>
+  <form id="form-link">
+    <input id="url" type="url" required aria-label="URL da página de venda" placeholder="https://… (página de venda pública)" autocomplete="off">
+    <button id="botao-link" type="submit">Auditar</button>
+  </form>
+  <div id="resultado-link" class="resultado" aria-live="polite"></div>
+
+  <h2>Lote de links reais</h2>
+  <div class="painel">
+    <button id="botao-lote" type="button" class="secundario">Disparar lote (data/real/urls.txt)</button>
+    <span class="motivo">Um evento por segundo, em segundo plano.</span>
+  </div>
+  <div id="resultado-lote" class="resultado" aria-live="polite"></div>
+
+  <h2>Fila de revisão</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>Produto</th><th>Origem</th><th>Entrada</th><th>Versão</th><th>Auditoria</th>
+      <th>Pontuação</th><th>Situação do produto</th><th>Criada em</th>
+    </tr>
+    </thead>
+    <tbody id="fila"></tbody>
+  </table>
+  <p class="motivo">Atualiza a cada 3 s. Pontuação "não calculada": a pontuação ainda não foi implementada nesta versão.</p>
+</main>
+
+<script>
+  // Todo dado vindo do servidor entra na tela por textContent, nunca por innerHTML:
+  // assim nenhum texto de página consegue virar HTML ou script (regra 3: texto de página é dado).
+
+  function celula(texto, classe) {
+    const td = document.createElement('td');
+    if (classe) td.className = classe;
+    td.textContent = texto;
+    return td;
+  }
+
+  function etiqueta(valor, prefixo) {
+    const td = document.createElement('td');
+    const span = document.createElement('span');
+    span.className = 'etiqueta ' + prefixo + '-' + valor;
+    span.textContent = valor;
+    td.appendChild(span);
+    return td;
+  }
+
+  function dataHora(iso) {
+    return iso ? new Date(iso).toLocaleString('pt-BR') : '—';
+  }
+
+  async function atualizarFila() {
+    const corpo = document.getElementById('fila');
+    let itens;
+    try {
+      const resposta = await fetch('/api/fila');
+      if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+      itens = await resposta.json();
+    } catch (e) {
+      return; // mantém a última fila na tela; tenta de novo em 3 s
+    }
+    corpo.replaceChildren();
+    if (itens.length === 0) {
+      const tr = document.createElement('tr');
+      const td = celula('Fila vazia. Audite um link ou dispare o lote.', 'vazio');
+      td.colSpan = 8;
+      tr.appendChild(td);
+      corpo.appendChild(tr);
+      return;
+    }
+    for (const item of itens) {
+      const tr = document.createElement('tr');
+      tr.appendChild(celula(item.produtoId));
+      tr.appendChild(etiqueta(item.origem, 'origem'));
+      tr.appendChild(etiqueta(item.entrada, 'entrada'));
+      tr.appendChild(celula(String(item.versao), 'num'));
+      const status = celula(item.statusAuditoria);
+      if (item.motivoFalha) {
+        const motivo = document.createElement('div');
+        motivo.className = 'motivo';
+        motivo.textContent = item.motivoFalha;
+        status.appendChild(motivo);
+      }
+      tr.appendChild(status);
+      tr.appendChild(celula(item.pontuacao == null ? 'não calculada' : item.pontuacao + ' (' + item.faixa + ')', 'num'));
+      tr.appendChild(celula(item.statusProduto || '—'));
+      tr.appendChild(celula(dataHora(item.criadaEm)));
+      corpo.appendChild(tr);
+    }
+  }
+
+  function mostrar(id, texto, erro) {
+    const el = document.getElementById(id);
+    el.textContent = texto;
+    el.classList.toggle('erro', !!erro);
+  }
+
+  document.getElementById('form-link').addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    const botao = document.getElementById('botao-link');
+    const url = document.getElementById('url').value.trim();
+    botao.disabled = true;
+    mostrar('resultado-link', 'Coletando a página… (pode levar alguns segundos)');
+    try {
+      const resposta = await fetch('/api/eventos/produto-enviado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'PRODUTO_ENVIADO', entrada: 'LINK', produto: { url: url, origem: 'REAL' } })
+      });
+      if (resposta.status === 400) {
+        mostrar('resultado-link', 'Pedido inválido: confira se a URL começa com http:// ou https://.', true);
+        return;
+      }
+      if (!resposta.ok) {
+        mostrar('resultado-link', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
+        return;
+      }
+      const r = await resposta.json();
+      if (r.resultado === 'IGNORADO_MESMO_HASH') {
+        mostrar('resultado-link', r.produtoId + ': página igual à da última auditoria; nada a fazer.');
+      } else {
+        mostrar('resultado-link', r.produtoId + ': auditoria versão ' + r.versao + ' — ' + r.statusAuditoria + '.',
+          r.statusAuditoria === 'FALHOU');
+      }
+      atualizarFila();
+    } catch (e) {
+      mostrar('resultado-link', 'Não foi possível falar com o servidor.', true);
+    } finally {
+      botao.disabled = false;
+    }
+  });
+
+  document.getElementById('botao-lote').addEventListener('click', async () => {
+    const botao = document.getElementById('botao-lote');
+    botao.disabled = true;
+    try {
+      const resposta = await fetch('/api/lote/urls', { method: 'POST' });
+      if (resposta.status === 409) {
+        mostrar('resultado-lote', 'Já existe um lote em andamento.', true);
+      } else if (resposta.status === 404) {
+        mostrar('resultado-lote', 'Arquivo data/real/urls.txt não encontrado.', true);
+      } else if (!resposta.ok) {
+        mostrar('resultado-lote', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
+      } else {
+        const r = await resposta.json();
+        let texto = r.eventosAgendados + ' links agendados, um a cada ' + (r.intervaloMs / 1000) + ' s.';
+        if (r.linhasInvalidas.length > 0) texto += ' Linhas ignoradas (formato inválido): ' + r.linhasInvalidas.join(', ') + '.';
+        mostrar('resultado-lote', texto, false);
+      }
+    } catch (e) {
+      mostrar('resultado-lote', 'Não foi possível falar com o servidor.', true);
+    } finally {
+      botao.disabled = false;
+    }
+  });
+
+  atualizarFila();
+  setInterval(atualizarFila, 3000);
+</script>
+</body>
+</html>

@@ -32,12 +32,18 @@ public class Auditoria {
 
     private int versao;
 
-    @Column(length = 64, nullable = false)
+    /** Nulo quando a coleta pela URL falhou: não houve texto para calcular o hash. */
+    @Column(length = 64)
     private String hashPagina;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusAuditoria status;
+
+    /** Por onde entrou: EVENTO (gatilho simulado) ou LINK (formulário). */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EntradaAuditoria entrada;
 
     /** Nulo enquanto a auditoria não termina. */
     private Integer pontuacao;
@@ -57,10 +63,11 @@ public class Auditoria {
     }
 
     /** Toda auditoria nasce EM_ANALISE. */
-    public Auditoria(Produto produto, int versao, String hashPagina, Instant criadaEm) {
+    public Auditoria(Produto produto, int versao, String hashPagina, EntradaAuditoria entrada, Instant criadaEm) {
         this.produto = produto;
         this.versao = versao;
         this.hashPagina = hashPagina;
+        this.entrada = entrada;
         this.criadaEm = criadaEm;
         this.status = StatusAuditoria.EM_ANALISE;
     }
@@ -78,6 +85,8 @@ public class Auditoria {
 
     public Faixa getFaixa() { return faixa; }
     public void setFaixa(Faixa faixa) { this.faixa = faixa; }
+
+    public EntradaAuditoria getEntrada() { return entrada; }
 
     public Instant getCriadaEm() { return criadaEm; }
 

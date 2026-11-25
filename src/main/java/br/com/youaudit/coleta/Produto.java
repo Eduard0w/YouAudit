@@ -34,6 +34,13 @@ public class Produto {
     @Column(length = 64)
     private String paginaHash;
 
+    /**
+     * SHA-256 da URL, quando a página veio por link. Serve para reconhecer o mesmo link de novo
+     * sem guardar a URL em claro (ela pode conter o nome do produtor, regra 8).
+     */
+    @Column(length = 64)
+    private String urlHash;
+
     @Enumerated(EnumType.STRING)
     private StatusProduto status;
 
@@ -68,6 +75,9 @@ public class Produto {
 
     public String getPaginaHash() { return paginaHash; }
     public void setPaginaHash(String paginaHash) { this.paginaHash = paginaHash; }
+
+    public String getUrlHash() { return urlHash; }
+    public void setUrlHash(String urlHash) { this.urlHash = urlHash; }
 
     public StatusProduto getStatus() { return status; }
     public void setStatus(StatusProduto status) { this.status = status; }

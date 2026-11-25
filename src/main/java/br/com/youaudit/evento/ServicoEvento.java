@@ -1,43 +1,64 @@
 package br.com.youaudit.evento;
 
+import br.com.youaudit.coleta.AtribuidorIdLink;
+import br.com.youaudit.coleta.ColetaFalhouException;
+import br.com.youaudit.coleta.ColetorPagina;
 import br.com.youaudit.coleta.ConteudoItem;
 import br.com.youaudit.coleta.ConteudoItemRepository;
 import br.com.youaudit.coleta.LimpadorTexto;
 import br.com.youaudit.coleta.Produto;
 import br.com.youaudit.coleta.ProdutoRepository;
+import br.com.youaudit.coleta.ResultadoColeta;
 import br.com.youaudit.coleta.StatusProduto;
+import br.com.youaudit.config.ColetaPropriedades;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Passo 1 do pipeline (CONTRATOS.md §4): recebe o evento, calcula o hash e decide se abre uma nova auditoria.
+ * Passos 1 e 2 do pipeline (CONTRATOS.md §4): recebe o evento, obtém o texto da página, calcula o hash e decide
+ * se abre uma nova auditoria.
  *
- * <p>Idempotência: se a página (já limpa) tem o mesmo hash da ÚLTIMA auditoria do produto, e essa auditoria não
- * falhou, o evento é registrado como IGNORADO_MESMO_HASH e nada mais acontece. Comparar com a última auditoria
- * (e não com qualquer auditoria antiga) faz a página que volta a um texto anterior (A → B → A) ser auditada de novo,
- * porque a fila precisa refletir a página atual. Uma auditoria que FALHOU não bloqueia: reenviar tenta outra vez,
- * para o produto nunca ficar preso.
+ * <p>Texto da página: se o evento traz URL, o {@link ColetorPagina} baixa a página e grava o snapshot, e o texto
+ * do snapshot é o que vale (para o hash e, depois, para o trecho literal). Senão, usa {@code pagina_texto}.
+ *
+ * <p>Idempotência: se o hash é igual ao da ÚLTIMA auditoria do produto, e ela não falhou nem ficou com coleta
+ * insuficiente, o evento é registrado como IGNORADO_MESMO_HASH e nada mais acontece. Comparar com a última (e não
+ * com qualquer auditoria antiga) faz a página que volta a um texto anterior (A → B → A) ser auditada de novo.
+ * Falha e coleta insuficiente não bloqueiam: reenviar tenta outra vez, para o produto nunca ficar preso.
+ *
+ * <p>Entrada LINK (formulário): o id é atribuído pelo {@link AtribuidorIdLink} ("link-NN") e o nome é o próprio id.
+ *
+ * <p>Limite conhecido: com URL, o download acontece dentro da requisição (até ~11 s), então o 202 não volta
+ * "na hora". Vira assíncrono quando o pipeline ganhar o @Async.
  */
 @Service
 public class ServicoEvento {
 
     private final LimpadorTexto limpador;
     private final CalculadoraHash calculadoraHash;
+    private final ColetorPagina coletor;
+    private final AtribuidorIdLink atribuidorIdLink;
+    private final ColetaPropriedades propriedadesColeta;
     private final ProdutoRepository produtos;
     private final ConteudoItemRepository conteudos;
     private final EventoProdutoRepository eventos;
     private final AuditoriaRepository auditorias;
     private final Clock relogio;
 
-    public ServicoEvento(LimpadorTexto limpador, CalculadoraHash calculadoraHash, ProdutoRepository produtos,
+    public ServicoEvento(LimpadorTexto limpador, CalculadoraHash calculadoraHash, ColetorPagina coletor,
+                         AtribuidorIdLink atribuidorIdLink, ColetaPropriedades propriedadesColeta, ProdutoRepository produtos,
                          ConteudoItemRepository conteudos, EventoProdutoRepository eventos,
                          AuditoriaRepository auditorias, Clock relogio) {
         this.limpador = limpador;
         this.calculadoraHash = calculadoraHash;
+        this.coletor = coletor;
+        this.atribuidorIdLink = atribuidorIdLink;
+        this.propriedadesColeta = propriedadesColeta;
         this.produtos = produtos;
         this.conteudos = conteudos;
         this.eventos = eventos;
@@ -48,49 +69,116 @@ public class ServicoEvento {
     /** Tudo numa transação só: ou grava produto, evento e auditoria juntos, ou não grava nada. */
     @Transactional
     public EventoResposta receber(EventoProdutoRequest pedido) {
+        EntradaAuditoria entrada = pedido.entrada();
+        String urlHash = pedido.produto().temUrl() ? calculadoraHash.sha256(pedido.produto().url().strip()) : null;
         ProdutoDoEvento dados = pedido.produto();
-        String textoLimpo = limpador.limpar(dados.paginaTexto());
-        if (textoLimpo.isEmpty()) {
-            throw new PaginaVaziaException(dados.id());
+        if (entrada == EntradaAuditoria.LINK) {
+            String id = atribuidorIdLink.idPara(urlHash);
+            dados = dados.comIdENome(id, id);
         }
-        String hash = calculadoraHash.sha256(textoLimpo);
         Instant agora = Instant.now(relogio);
-
         Optional<Auditoria> ultima = auditorias.findFirstByProdutoIdOrderByVersaoDesc(dados.id());
-        boolean mesmaPagina = ultima
-                .filter(a -> a.getHashPagina().equals(hash))
-                .filter(a -> a.getStatus() != StatusAuditoria.FALHOU)
-                .isPresent();
+        int versao = ultima.map(a -> a.getVersao() + 1).orElse(1);
 
-        if (mesmaPagina) {
+        String textoLimpo;
+        String hash;
+        if (dados.temUrl()) {
+            ResultadoColeta coleta;
+            try {
+                coleta = coletor.coletar(dados.id(), dados.url());
+            } catch (ColetaFalhouException e) {
+                return registrarFalhaDeColeta(pedido.tipo(), entrada, dados, urlHash, versao, agora, e.getMessage());
+            }
+            textoLimpo = coleta.textoLimpo();
+            hash = coleta.hash();
+        } else {
+            textoLimpo = limpador.limpar(dados.paginaTexto());
+            if (textoLimpo.isEmpty()) {
+                throw new PaginaVaziaException(dados.id());
+            }
+            hash = calculadoraHash.sha256(textoLimpo);
+        }
+
+        if (mesmaPaginaDaUltimaAuditoria(ultima, hash)) {
             Produto produto = ultima.get().getProduto();
             EventoProduto evento = eventos.save(
                     new EventoProduto(produto, pedido.tipo(), hash, agora, ResultadoEvento.IGNORADO_MESMO_HASH));
-            return new EventoResposta(evento.getId(), ResultadoEvento.IGNORADO_MESMO_HASH, null, null);
+            return new EventoResposta(evento.getId(), produto.getId(), ResultadoEvento.IGNORADO_MESMO_HASH, null, null,
+                    null, entrada);
         }
 
-        int versao = ultima.map(a -> a.getVersao() + 1).orElse(1);
-        Produto produto = atualizarProduto(dados, textoLimpo, hash, versao);
-        substituirConteudo(produto, dados.conteudo());
+        Produto produto = buscarOuCriar(dados);
+        aplicarDadosDoEvento(produto, dados, urlHash, versao);
+        produto.setPaginaTexto(textoLimpo);
+        produto.setPaginaHash(hash);
+        Auditoria auditoria = new Auditoria(produto, versao, hash, entrada, agora);
 
-        Auditoria auditoria = auditorias.save(new Auditoria(produto, versao, hash, agora));
+        // A regra do mínimo vale só para a coleta por URL: as páginas fictícias de pagina_texto podem ser curtas.
+        if (dados.temUrl() && textoLimpo.length() < propriedadesColeta.minimoCaracteres()) {
+            auditoria.setStatus(StatusAuditoria.COLETA_INSUFICIENTE);
+            auditoria.setMotivoFalha("texto limpo com " + textoLimpo.length() + " caracteres; mínimo configurado: "
+                    + propriedadesColeta.minimoCaracteres());
+            auditoria.setConcluidaEm(agora);
+            produto.setStatus(StatusProduto.AGUARDANDO_DECISAO);
+        } else {
+            produto.setStatus(StatusProduto.EM_ANALISE);
+        }
+
+        produtos.save(produto);
+        substituirConteudo(produto, dados.conteudo());
+        auditorias.save(auditoria);
         EventoProduto evento = eventos.save(
                 new EventoProduto(produto, pedido.tipo(), hash, agora, ResultadoEvento.PROCESSADO));
-        return new EventoResposta(evento.getId(), ResultadoEvento.PROCESSADO, auditoria.getId(), versao);
+        return new EventoResposta(evento.getId(), produto.getId(), ResultadoEvento.PROCESSADO, auditoria.getId(),
+                versao, auditoria.getStatus(), entrada);
     }
 
-    /** Cria o produto se for novo, ou atualiza com os dados da nova versão. */
-    private Produto atualizarProduto(ProdutoDoEvento dados, String textoLimpo, String hash, int versao) {
-        Produto produto = produtos.findById(dados.id()).orElseGet(() -> new Produto(dados.id()));
+    private static boolean mesmaPaginaDaUltimaAuditoria(Optional<Auditoria> ultima, String hash) {
+        return ultima
+                .filter(a -> Objects.equals(a.getHashPagina(), hash))
+                .filter(a -> a.getStatus() != StatusAuditoria.FALHOU)
+                .filter(a -> a.getStatus() != StatusAuditoria.COLETA_INSUFICIENTE)
+                .isPresent();
+    }
+
+    /**
+     * A página não pôde ser obtida: registra uma auditoria FALHOU (sem hash) com o motivo, para ficar na trilha
+     * e aparecer para uma pessoa. O texto e a entrega da versão anterior, se houver, são mantidos.
+     */
+    private EventoResposta registrarFalhaDeColeta(TipoEvento tipo, EntradaAuditoria entrada, ProdutoDoEvento dados,
+                                                  String urlHash, int versao, Instant agora, String motivo) {
+        Produto produto = buscarOuCriar(dados);
+        aplicarDadosDoEvento(produto, dados, urlHash, versao);
+        produto.setStatus(StatusProduto.AGUARDANDO_DECISAO);
+        produtos.save(produto);
+
+        Auditoria auditoria = new Auditoria(produto, versao, null, entrada, agora);
+        auditoria.setStatus(StatusAuditoria.FALHOU);
+        auditoria.setMotivoFalha("coleta: " + motivo);
+        auditoria.setConcluidaEm(agora);
+        auditorias.save(auditoria);
+
+        EventoProduto evento = eventos.save(
+                new EventoProduto(produto, tipo, null, agora, ResultadoEvento.PROCESSADO));
+        return new EventoResposta(evento.getId(), produto.getId(), ResultadoEvento.PROCESSADO, auditoria.getId(),
+                versao, StatusAuditoria.FALHOU, entrada);
+    }
+
+    private Produto buscarOuCriar(ProdutoDoEvento dados) {
+        return produtos.findById(dados.id()).orElseGet(() -> new Produto(dados.id()));
+    }
+
+    /**
+     * Copia os dados cadastrais do evento. A URL NÃO é guardada no banco (regra 8): só o hash dela, e a URL fica
+     * no snapshot, em data/real.
+     */
+    private static void aplicarDadosDoEvento(Produto produto, ProdutoDoEvento dados, String urlHash, int versao) {
         produto.setNome(dados.nome());
         produto.setCategoria(dados.categoria());
         produto.setPreco(dados.preco());
         produto.setOrigem(dados.origem());
-        produto.setPaginaTexto(textoLimpo);
-        produto.setPaginaHash(hash);
+        produto.setUrlHash(urlHash);
         produto.setVersaoAtual(versao);
-        produto.setStatus(StatusProduto.EM_ANALISE);
-        return produtos.save(produto);
     }
 
     /** A entrega da nova versão substitui a anterior. Sem conteúdo no evento, o produto fica sem entrega cadastrada. */

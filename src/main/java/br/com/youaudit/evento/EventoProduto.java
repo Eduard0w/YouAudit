@@ -30,7 +30,8 @@ public class EventoProduto {
     @Column(nullable = false)
     private TipoEvento tipo;
 
-    @Column(length = 64, nullable = false)
+    /** Nulo quando a coleta pela URL falhou. */
+    @Column(length = 64)
     private String hashPagina;
 
     @Column(nullable = false)
