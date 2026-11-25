@@ -11,8 +11,8 @@ import java.util.Optional;
 /**
  * Guarda as respostas da IA na tabela cache_ia, para a demo repetir sem a API no ar e sem gastar cota.
  *
- * <p>Chave = tarefa + versão do prompt + SHA-256 da entrada exata (instrução de sistema e conteúdo).
- * Mesma entrada → mesma chave → resposta do cache. Mudou o prompt ou a página → chave nova → chama a IA.
+ * <p>Chave = tarefa + versão do prompt + modelo + SHA-256 da entrada exata (instrução de sistema e conteúdo).
+ * Mesma entrada → mesma chave → resposta do cache. Mudou o prompt, o modelo ou a página → chave nova → chama a IA.
  *
  * <p>Quem usa só deve chamar {@link #guardar} DEPOIS de validar a resposta: se uma resposta inválida fosse guardada,
  * a nova tentativa leria do cache a mesma resposta ruim.
@@ -30,10 +30,10 @@ public class CacheRespostasIa {
         this.relogio = relogio;
     }
 
-    /** Ex.: "extracao:v1:3f2a…" (64 caracteres de hash). O "\u0000" separa as partes sem ambiguidade. */
-    public String chave(String tarefa, String versaoPrompt, PedidoIa pedido) {
+    /** Ex.: "extracao:v1:gemini-3.8-flash:3f2a…" (64 caracteres de hash). O "\u0000" separa as partes sem ambiguidade. */
+    public String chave(String tarefa, String versaoPrompt, String modelo, PedidoIa pedido) {
         String entrada = pedido.instrucaoSistema() + "\u0000" + pedido.conteudo();
-        return tarefa + ":" + versaoPrompt + ":" + calculadoraHash.sha256(entrada);
+        return tarefa + ":" + versaoPrompt + ":" + modelo + ":" + calculadoraHash.sha256(entrada);
     }
 
     @Transactional(readOnly = true)

@@ -121,7 +121,7 @@ class ServicoExtracaoTest {
 
         assertThat(r.aceitas()).hasSize(1);
         PedidoIa original = ia.pedidos().get(0);
-        assertThat(cache.buscar(cache.chave(PromptExtracao.TAREFA, PromptExtracao.VERSAO, original))).isEmpty();
+        assertThat(cache.buscar(cache.chave(PromptExtracao.TAREFA, PromptExtracao.VERSAO, ia.modelo(), original))).isEmpty();
     }
 
     @Test

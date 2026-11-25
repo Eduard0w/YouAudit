@@ -29,6 +29,11 @@ public final class ClienteIaFake implements ClienteIa {
     }
 
     @Override
+    public String modelo() {
+        return "fake";
+    }
+
+    @Override
     public String gerarJson(PedidoIa pedido) {
         pedidos.add(pedido);
         Object proxima = respostas.poll();

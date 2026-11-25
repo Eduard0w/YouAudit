@@ -11,4 +11,7 @@ public interface ClienteIa {
 
     /** @throws FalhaIaException se não houver resposta utilizável (sem chave, rede, limite, erro da API) */
     String gerarJson(PedidoIa pedido);
+
+    /** Nome do modelo que responde. Entra na chave do cache: outro modelo, outra resposta. */
+    String modelo();
 }

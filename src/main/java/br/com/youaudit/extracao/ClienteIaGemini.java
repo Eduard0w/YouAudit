@@ -85,6 +85,11 @@ public class ClienteIaGemini implements ClienteIa {
                 + " tentativas (" + ultimoMotivo + ")");
     }
 
+    @Override
+    public String modelo() {
+        return propriedades.model();
+    }
+
     private static Map<String, Object> corpo(PedidoIa pedido) {
         Map<String, Object> configuracao = new LinkedHashMap<>();
         configuracao.put("responseMimeType", "application/json");

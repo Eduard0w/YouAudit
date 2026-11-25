@@ -21,29 +21,30 @@ class CacheRespostasIaTest {
 
     @Test
     void mesmaEntradaGeraMesmaChave() {
-        assertThat(cache.chave("extracao", "v1", PEDIDO)).isEqualTo(cache.chave("extracao", "v1", PEDIDO));
+        assertThat(cache.chave("extracao", "v1", "modelo-a", PEDIDO)).isEqualTo(cache.chave("extracao", "v1", "modelo-a", PEDIDO));
     }
 
     @Test
-    void chaveMudaComTarefaVersaoInstrucaoOuConteudo() {
-        String base = cache.chave("extracao", "v1", PEDIDO);
+    void chaveMudaComTarefaVersaoModeloInstrucaoOuConteudo() {
+        String base = cache.chave("extracao", "v1", "modelo-a", PEDIDO);
 
-        assertThat(cache.chave("cruzamento", "v1", PEDIDO)).isNotEqualTo(base);
-        assertThat(cache.chave("extracao", "v2", PEDIDO)).isNotEqualTo(base);
-        assertThat(cache.chave("extracao", "v1", new PedidoIa("sistema v1 alterado", PEDIDO.conteudo(), Map.of())))
+        assertThat(cache.chave("cruzamento", "v1", "modelo-a", PEDIDO)).isNotEqualTo(base);
+        assertThat(cache.chave("extracao", "v2", "modelo-a", PEDIDO)).isNotEqualTo(base);
+        assertThat(cache.chave("extracao", "v1", "modelo-b", PEDIDO)).isNotEqualTo(base);
+        assertThat(cache.chave("extracao", "v1", "modelo-a", new PedidoIa("sistema v1 alterado", PEDIDO.conteudo(), Map.of())))
                 .isNotEqualTo(base);
-        assertThat(cache.chave("extracao", "v1", new PedidoIa(PEDIDO.instrucaoSistema(), "[bloco 1]\n28 aulas", Map.of())))
+        assertThat(cache.chave("extracao", "v1", "modelo-a", new PedidoIa(PEDIDO.instrucaoSistema(), "[bloco 1]\n28 aulas", Map.of())))
                 .isNotEqualTo(base);
     }
 
     @Test
-    void chaveTemFormatoTarefaVersaoHash() {
-        assertThat(cache.chave("extracao", "v1", PEDIDO)).matches("extracao:v1:[0-9a-f]{64}");
+    void chaveTemFormatoTarefaVersaoModeloHash() {
+        assertThat(cache.chave("extracao", "v1", "modelo-a", PEDIDO)).matches("extracao:v1:modelo-a:[0-9a-f]{64}");
     }
 
     @Test
     void guardaEDevolve() {
-        String chave = cache.chave("extracao", "v1", PEDIDO);
+        String chave = cache.chave("extracao", "v1", "modelo-a", PEDIDO);
 
         assertThat(cache.buscar(chave)).isEmpty();
         cache.guardar(chave, "{\"afirmacoes\": []}");
@@ -52,7 +53,7 @@ class CacheRespostasIaTest {
 
     @Test
     void guardarDeNovoMantemAPrimeiraResposta() {
-        String chave = cache.chave("extracao", "v1", PEDIDO);
+        String chave = cache.chave("extracao", "v1", "modelo-a", PEDIDO);
 
         cache.guardar(chave, "primeira");
         cache.guardar(chave, "segunda");

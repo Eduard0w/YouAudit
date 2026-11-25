@@ -69,7 +69,7 @@ public class ServicoExtracao {
                                                           List<AfirmacaoDescartada> recusadas, Contagem contagem) {
         PedidoIa pedido = new PedidoIa(PromptExtracao.INSTRUCAO_SISTEMA, PromptExtracao.conteudo(grupo),
                 PromptExtracao.esquema());
-        String chave = cache.chave(PromptExtracao.TAREFA, PromptExtracao.VERSAO, pedido);
+        String chave = cache.chave(PromptExtracao.TAREFA, PromptExtracao.VERSAO, clienteIa.modelo(), pedido);
 
         Optional<String> emCache = cache.buscar(chave);
         if (emCache.isPresent()) {
