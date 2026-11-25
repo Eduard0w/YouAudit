@@ -1,0 +1,19 @@
+# Documentação privada e configuração local
+youaudit-docs
+.mcp.json
+.claude/settings.local.json
+
+# Dados reais de páginas de venda: NUNCA no repositório
+data/real/
+
+# Segredos
+*.env
+.env*
+
+# Build
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
