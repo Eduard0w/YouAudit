@@ -1,0 +1,62 @@
+{
+  "fonte": "hipótese de trabalho: listas genéricas escritas no protótipo, ainda NÃO conferidas com os termos públicos da YouShop (PLANO.md: Eduardo revisa e marca)",
+  "termosProibidos": [
+    "dinheiro fácil", "renda garantida", "lucro garantido", "lucros garantidos", "resultado garantido",
+    "resultados garantidos", "ganhos garantidos", "retorno garantido", "fique rico", "enriqueça rápido",
+    "sem esforço", "100% garantido", "risco zero", "fórmula secreta", "milagroso", "milagrosa"
+  ],
+  "palavrasChavePorTipo": {
+    "RESULTADO_FINANCEIRO": [
+      "faturar", "fature", "faturamento", "lucrar", "lucro", "renda extra", "ganhar dinheiro", "ganhe dinheiro",
+      "por mês", "independência financeira", "primeira venda", "primeiras vendas"
+    ],
+    "PRAZO_RESULTADO": [
+      "em 7 dias", "em 15 dias", "em 30 dias", "em 60 dias", "em 90 dias", "em poucos dias", "em poucas semanas",
+      "em uma semana", "resultados rápidos", "resultado rápido"
+    ],
+    "QUANTIDADE_CONTEUDO": [
+      "aula", "aulas", "videoaula", "videoaulas", "módulo", "módulos", "horas de conteúdo", "horas de aula",
+      "exercícios", "apostila", "apostilas", "ebook", "e-book"
+    ],
+    "CERTIFICADO": ["certificado", "certificados", "certificação"],
+    "RECONHECIMENTO_OFICIAL": [
+      "reconhecido pelo mec", "reconhecida pelo mec", "credenciado", "credenciada", "homologado", "homologada",
+      "aprovado pela anvisa", "certificação oficial", "registro oficial"
+    ],
+    "BONUS": ["bônus", "bonus", "brinde", "de presente", "grátis"],
+    "ACESSO": [
+      "acesso vitalício", "vitalício", "acesso por", "meses de acesso", "ano de acesso", "anos de acesso",
+      "acesso imediato", "acesso ilimitado", "disponível na plataforma"
+    ],
+    "GARANTIA": ["garantia", "reembolso", "devolução", "dinheiro de volta", "satisfação garantida"],
+    "PRECO_CONDICOES": ["preço", "parcelas", "parcelado", "à vista", "desconto", "pix", "boleto", "cartão de crédito"],
+    "CUSTO_ADICIONAL": [
+      "custo adicional", "ferramenta paga", "assinatura", "mensalidade", "não incluso", "não incluído",
+      "à parte", "cobrado separadamente", "licença"
+    ],
+    "DEPOIMENTO_RESULTADO": ["depoimento", "depoimentos", "mudou minha vida", "eu consegui", "meus resultados", "minha aluna", "meu aluno"],
+    "ESCASSEZ_URGENCIA": [
+      "últimas vagas", "vagas limitadas", "só hoje", "apenas hoje", "por tempo limitado", "oferta termina",
+      "últimas unidades", "não perca", "encerra hoje"
+    ],
+    "SAUDE_CURA": ["cura", "curar", "emagrecer", "emagreça", "emagrecimento", "tratamento", "ansiedade", "depressão", "doença"]
+  },
+  "palavrasRessalva": [
+    "resultados podem variar", "os resultados variam", "resultados variam", "não garantimos", "não há garantia de resultado",
+    "depende de cada", "depende do seu esforço", "resultados individuais", "não é promessa", "não garante"
+  ],
+  "janelaRessalvaBlocos": 1,
+  "palavrasCustoNaEntrega": [
+    "pago", "paga", "assinatura", "licença", "mensalidade", "plano pro", "plano premium", "versão paga", "custo", "comprar"
+  ],
+  "informacoesEssenciais": {
+    "preço e condições": ["preço", "parcelas", "parcelado", "à vista", "pix", "boleto", "cartão de crédito"],
+    "prazo de acesso": ["acesso vitalício", "vitalício", "acesso por", "meses de acesso", "ano de acesso", "anos de acesso", "disponível na plataforma"],
+    "canal de contato": ["contato", "suporte", "e-mail", "email", "whatsapp", "atendimento"],
+    "política de reembolso": ["reembolso", "garantia", "devolução", "dinheiro de volta"]
+  },
+  "unidades": {
+    "AULA": ["aula", "aulas", "videoaula", "videoaulas"],
+    "MODULO": ["modulo", "modulos"]
+  }
+}
