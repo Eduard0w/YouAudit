@@ -22,22 +22,46 @@ class ComparadorAfirmacoesTest {
     void pedacoDaFraseDoGabaritoComMesmoTipoCasa() {
         var c = ComparadorAfirmacoes.comparar(List.of(ouro(TipoAfirmacao.GARANTIA, "Garantia de 7 dias para devolução")),
                 List.of(achada(TipoAfirmacao.GARANTIA, "Garantia de 7 dias")));
-        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 0, 0));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 0, 0, 0));
     }
 
     @Test
     void tipoDiferenteNaoCasa() {
         var c = ComparadorAfirmacoes.comparar(List.of(ouro(TipoAfirmacao.GARANTIA, "Garantia de 7 dias")),
                 List.of(achada(TipoAfirmacao.ACESSO, "Garantia de 7 dias")));
-        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(0, 1, 1));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(0, 1, 1, 0));
     }
 
     @Test
-    void tresPedacosDaMesmaFraseContamUmAcertoEDoisFalsosPositivos() {
+    void tresPedacosDaMesmaFraseContamUmAcertoEDoisAgrupados() {
+        // Opção "a" do Eduardo (26/11): os pedaços a mais não são acerto (não infla a cobertura) nem erro.
         var c = ComparadorAfirmacoes.comparar(List.of(ouro(TipoAfirmacao.BONUS, "Bônus 1 e Bônus 2 e Bônus 3")),
                 List.of(achada(TipoAfirmacao.BONUS, "Bônus 1"), achada(TipoAfirmacao.BONUS, "Bônus 2"),
                         achada(TipoAfirmacao.BONUS, "Bônus 3")));
-        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 2, 0));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 0, 0, 2));
+    }
+
+    @Test
+    void pedacoComTipoDiferenteContinuaFalsoPositivo() {
+        var c = ComparadorAfirmacoes.comparar(List.of(ouro(TipoAfirmacao.BONUS, "Bônus 1 e Bônus 2")),
+                List.of(achada(TipoAfirmacao.BONUS, "Bônus 1"), achada(TipoAfirmacao.ACESSO, "Bônus 2")));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 1, 0, 0));
+    }
+
+    @Test
+    void trechoForaDoItemAcertadoContinuaFalsoPositivo() {
+        var c = ComparadorAfirmacoes.comparar(List.of(ouro(TipoAfirmacao.BONUS, "Bônus 1 e Bônus 2")),
+                List.of(achada(TipoAfirmacao.BONUS, "Bônus 1"), achada(TipoAfirmacao.BONUS, "Bônus 9")));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(1, 1, 0, 0));
+    }
+
+    @Test
+    void pedacoNaoRoubaOAcertoDeOutroItemDoGabarito() {
+        // "Bônus 2" está dentro do 1º item, mas também é o 2º item: o 1 para 1 vem antes do agrupamento.
+        var c = ComparadorAfirmacoes.comparar(
+                List.of(ouro(TipoAfirmacao.BONUS, "Bônus 1 e Bônus 2"), ouro(TipoAfirmacao.BONUS, "Bônus 2")),
+                List.of(achada(TipoAfirmacao.BONUS, "Bônus 1"), achada(TipoAfirmacao.BONUS, "Bônus 2")));
+        assertThat(c).isEqualTo(new ComparadorAfirmacoes.Contagem(2, 0, 0, 0));
     }
 
     @Test
