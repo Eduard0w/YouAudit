@@ -21,8 +21,13 @@ public final class PromptExtracao {
      * v2 (26/11): ACESSO passou de "duração do acesso" para "duração, forma ou condição de acesso". Decisão do Eduardo
      * depois de revisar pagina-02 e pagina-05 (DESENVOLVIMENTO): a v1 não marcava "Curso 100% online" nem "Estude no
      * seu ritmo", que o gabarito marca como ACESSO.
+     * v3 (26/11): exemplos de ACESSO. Na rodada do DESENVOLVIMENTO a v2 ainda não marcou "online", "ao vivo" e
+     * "estudar quando quiser" (páginas 02, 04, 05, 07). Os exemplos são GENÉRICOS (não copiados das páginas), para
+     * o prompt não decorar o DESENVOLVIMENTO e o RESERVADO continuar sendo um teste honesto. Decisão do Eduardo. Com só os exemplos, a pagina-01 passou a
+     * marcar planilha, grupo e webinars (BONUS no gabarito) como ACESSO; por isso a frase final separa ITEM a mais
+     * (BONUS) de forma de acesso (ACESSO).
      */
-    public static final String VERSAO = "v2";
+    public static final String VERSAO = "v3";
 
     static final String INICIO_DADOS = "<<<INICIO_DOS_DADOS>>>";
     static final String FIM_DADOS = "<<<FIM_DOS_DADOS>>>";
@@ -43,6 +48,12 @@ public final class PromptExtracao {
             GARANTIA (garantia ou reembolso), PRECO_CONDICOES (preço e pagamento), CUSTO_ADICIONAL (custo extra \
             mencionado), DEPOIMENTO_RESULTADO (depoimento com resultado), ESCASSEZ_URGENCIA (urgência, vagas \
             limitadas), SAUDE_CURA (alegação de saúde ou cura), OUTRO (fora da lista).
+            ACESSO vale também sem prazo: diz COMO ou QUANDO a pessoa acessa o conteúdo. Exemplos de ideias \
+            (o trecho continua sendo copiado da página): curso online ou a distância, aulas gravadas, aulas ao vivo, \
+            estudar no próprio ritmo, estudar a qualquer hora ou de qualquer lugar, acesso pelo celular, acesso \
+            vitalício, acesso por um período. \
+            Se o trecho oferece um ITEM a mais (planilha, material, grupo, comunidade, encontro, mentoria), é BONUS, \
+            não ACESSO, mesmo que use a palavra "acesso" ou "ao vivo".
             Preencha valor só se houver número ou prazo no trecho; senão deixe nulo. confianca vai de 0 a 1.
             Se não houver afirmação, devolva lista vazia.
             Não avalie se a afirmação é verdadeira ou permitida.
