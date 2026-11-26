@@ -67,6 +67,7 @@ class ProcessadorAuditoriaTest {
     @Autowired private AuditoriaRepository auditorias;
     @Autowired private AchadoRepository achados;
     @Autowired private NotificacaoProdutorRepository notificacoes;
+    @Autowired private br.com.youaudit.regras.RegraRepository regras;
 
     private Long auditoriaId;
     private int itemCusto;
@@ -148,5 +149,19 @@ class ProcessadorAuditoriaTest {
         processador.processar(auditoriaId);
 
         assertThat(achados.findByAuditoriaId(auditoriaId)).isEmpty();
+    }
+
+    @Test
+    void tabelaRegraVaziaFalhaComMotivoEmVezDePontuarZero() {
+        when(iaPrincipal.gerarJson(any())).thenReturn(EXTRACAO);
+        when(iaSecundaria.gerarJson(any())).thenReturn("{\"associacoes\":[{\"promessa\":0,\"item\":null}],\"custos\":[]}");
+        regras.deleteAll();
+
+        processador.processar(auditoriaId);
+
+        Auditoria a = auditorias.findById(auditoriaId).orElseThrow();
+        assertThat(a.getStatus()).isEqualTo(StatusAuditoria.FALHOU);
+        assertThat(a.getPontuacao()).isNull();
+        assertThat(a.getMotivoFalha()).contains("nenhuma regra ativa");
     }
 }

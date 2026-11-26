@@ -94,6 +94,17 @@ class ClienteIaGroqTest {
     }
 
     @Test
+    void esquemaRecusadoPeloGroqTentaUmaVezEmModoJsonSimples() throws Exception {
+        servidor.emSequencia(CAMINHO, 400, "application/json", "{\"error\":{\"code\":\"json_validate_failed\"}}")
+                .emSequencia(CAMINHO, 200, "application/json", RESPOSTA_OK);
+
+        assertThat(cliente(CHAVE_FALSA).gerarJson(PEDIDO)).isEqualTo("{\"afirmacoes\": []}");
+        JsonNode segundo = json.readTree(servidor.ultimoCorpo());
+        assertThat(segundo.path("response_format").path("type").asText()).isEqualTo("json_object");
+        assertThat(segundo.has("__estrito")).isFalse(); // a marca interna não vai para a API
+    }
+
+    @Test
     void respostaCortadaPorTamanhoEFalha() {
         servidor.responder(CAMINHO, 200, "application/json", """
                 {"choices":[{"message":{"content":"{\\"afirmacoes\\": [{"},"finish_reason":"length"}]}""");

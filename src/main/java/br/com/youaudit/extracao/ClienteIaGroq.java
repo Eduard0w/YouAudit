@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Chamada ao Groq (API no formato da OpenAI: POST /chat/completions), com o RestClient do Spring (sem dependência nova).
@@ -30,6 +31,8 @@ import java.util.Map;
  *   <li>429 (limite por minuto): espera o que o cabeçalho Retry-After pede (com teto), senão espera crescente.
  *       Rede ou 5xx: espera crescente. Outros erros (400, 401, 403, 413) falham na hora.</li>
  *   <li>{@code finish_reason = length} (resposta cortada) é falha: um JSON pela metade não serve.</li>
+ *   <li>UMA chamada por vez por modelo ({@link #fila}): com 3 auditorias em paralelo, as chamadas juntas estouravam o
+ *       limite por minuto (visto em 26/11: 2 auditorias FALHARAM com 429). Em fila, cada uma espera a sua vez.</li>
  * </ul>
  */
 public class ClienteIaGroq implements ClienteIa {
@@ -39,6 +42,8 @@ public class ClienteIaGroq implements ClienteIa {
     private final GroqPropriedades propriedades;
     private final String modelo;
     private final RestClient http;
+    /** Justa (true): quem chegou primeiro é atendido primeiro. */
+    private final ReentrantLock fila = new ReentrantLock(true);
 
     public ClienteIaGroq(GroqPropriedades propriedades, String modelo) {
         this.propriedades = propriedades;
@@ -60,7 +65,22 @@ public class ClienteIaGroq implements ClienteIa {
         if (chave == null || chave.isBlank()) {
             throw new FalhaIaException("GROQ_API_KEY não definida: a chamada à IA não foi feita");
         }
-        Map<String, Object> corpo = corpo(pedido);
+        fila.lock();
+        try {
+            try {
+                return chamar(chave, corpo(pedido, true));
+            } catch (EsquemaRecusadoPeloGroq e) {
+                // O modelo escreveu algo fora do esquema estrito e o PRÓPRIO Groq recusou (json_validate_failed).
+                // Uma nova tentativa só pedindo "um JSON": o nosso analisador confere o esquema de qualquer jeito.
+                log.warn("Groq ({}): resposta fora do esquema estrito; nova tentativa em modo JSON simples", modelo);
+                return chamar(chave, corpo(pedido, false));
+            }
+        } finally {
+            fila.unlock();
+        }
+    }
+
+    private String chamar(String chave, Map<String, Object> corpo) {
         String ultimoMotivo = "";
         long proximaEspera = 0;
         for (int tentativa = 0; tentativa <= propriedades.tentativasExtras(); tentativa++) {
@@ -73,14 +93,17 @@ public class ClienteIaGroq implements ClienteIa {
                         .uri("/chat/completions")
                         .header("Authorization", "Bearer " + chave)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(corpo)
+                        .body(semMarcaInterna(corpo))
                         .retrieve()
                         .body(JsonNode.class);
                 return textoDaResposta(resposta);
             } catch (RestClientResponseException e) {
                 int status = e.getStatusCode().value();
+                if (status == 400 && Boolean.TRUE.equals(corpo.get(ESTRITO)) && codigoDoErro(e).equals(", json_validate_failed")) {
+                    throw new EsquemaRecusadoPeloGroq();
+                }
                 if (status != 429 && !(e instanceof HttpServerErrorException)) {
-                    throw new FalhaIaException("o Groq recusou o pedido (HTTP " + status + ")");
+                    throw new FalhaIaException("o Groq recusou o pedido (HTTP " + status + codigoDoErro(e) + ")");
                 }
                 ultimoMotivo = "HTTP " + status;
                 proximaEspera = status == 429 ? esperaPedida(e, esperaPadrao) : esperaPadrao;
@@ -97,7 +120,14 @@ public class ClienteIaGroq implements ClienteIa {
                 + " tentativas (" + ultimoMotivo + ")");
     }
 
-    private Map<String, Object> corpo(PedidoIa pedido) {
+    /** Marca interna (não vai para a API): o corpo pede o esquema estrito. */
+    private static final String ESTRITO = "__estrito";
+
+    /** Sinal interno: o Groq recusou a resposta por não seguir o esquema estrito. */
+    private static final class EsquemaRecusadoPeloGroq extends RuntimeException {
+    }
+
+    private Map<String, Object> corpo(PedidoIa pedido, boolean estrito) {
         Map<String, Object> esquema = new LinkedHashMap<>();
         esquema.put("name", "resposta");
         esquema.put("strict", true);
@@ -111,7 +141,9 @@ public class ClienteIaGroq implements ClienteIa {
         corpo.put("messages", List.of(
                 Map.of("role", "system", "content", pedido.instrucaoSistema()),
                 Map.of("role", "user", "content", pedido.conteudo())));
-        corpo.put("response_format", Map.of("type", "json_schema", "json_schema", esquema));
+        corpo.put("response_format", estrito ? Map.of("type", "json_schema", "json_schema", esquema)
+                : Map.of("type", "json_object"));
+        corpo.put(ESTRITO, estrito);
         return corpo;
     }
 
@@ -127,6 +159,26 @@ public class ClienteIaGroq implements ClienteIa {
             throw new FalhaIaException("o Groq não devolveu texto" + (motivo.isEmpty() ? "" : " (finish_reason=" + motivo + ")"));
         }
         return texto;
+    }
+
+    /**
+     * Só o CÓDIGO do erro (ex.: "json_validate_failed"), nunca a mensagem inteira: ela pode repetir texto da página
+     * ou da resposta. Chave nunca aparece aqui (não está no corpo da resposta).
+     */
+    private static String codigoDoErro(RestClientResponseException e) {
+        try {
+            String codigo = new com.fasterxml.jackson.databind.ObjectMapper().readTree(e.getResponseBodyAsString())
+                    .path("error").path("code").asText("");
+            return codigo.matches("[a-z_]{1,60}") ? ", " + codigo : "";
+        } catch (Exception ignorar) {
+            return "";
+        }
+    }
+
+    private static Map<String, Object> semMarcaInterna(Map<String, Object> corpo) {
+        Map<String, Object> copia = new LinkedHashMap<>(corpo);
+        copia.remove(ESTRITO);
+        return copia;
     }
 
     /** Retry-After vem em segundos (pode ter fração). Sem cabeçalho, usa a espera padrão. Sempre com teto. */

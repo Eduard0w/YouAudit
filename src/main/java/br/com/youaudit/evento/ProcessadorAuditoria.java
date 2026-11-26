@@ -122,6 +122,8 @@ public class ProcessadorAuditoria {
             log.info("Auditoria {} concluída", auditoriaId);
         } catch (FalhaIaException e) {
             falhar(auditoriaId, "IA: " + e.getMessage());
+        } catch (TabelaRegraVaziaException e) {
+            falhar(auditoriaId, e.getMessage());
         } catch (RuntimeException e) {
             // Erro inesperado: registra o tipo (a mensagem pode trazer dados da página) e não deixa o produto preso.
             log.error("Auditoria {}: erro inesperado", auditoriaId, e);
@@ -144,6 +146,11 @@ public class ProcessadorAuditoria {
 
         Map<TipoAchado, Regra> ativas = new EnumMap<>(TipoAchado.class);
         regras.findByAtivaTrue().forEach(r -> ativas.put(r.getCodigo(), r));
+        if (ativas.isEmpty()) {
+            // Sem regras, todo achado seria filtrado e a pontuação daria 0 ("liberação sugerida" para tudo).
+            // Melhor falhar alto do que dar um resultado bonito e errado (bug real de 26/11: data.sql não rodou).
+            throw new TabelaRegraVaziaException();
+        }
         List<AchadoDetectado> validos = todos.stream().filter(a -> ativas.containsKey(a.tipo())).toList();
 
         List<Sugestao> sugestoes = redacao.redigir(validos.stream()

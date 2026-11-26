@@ -17,7 +17,12 @@ import java.util.Map;
 public final class PromptExtracao {
 
     public static final String TAREFA = "extracao";
-    public static final String VERSAO = "v1";
+    /**
+     * v2 (26/11): ACESSO passou de "duração do acesso" para "duração, forma ou condição de acesso". Decisão do Eduardo
+     * depois de revisar pagina-02 e pagina-05 (DESENVOLVIMENTO): a v1 não marcava "Curso 100% online" nem "Estude no
+     * seu ritmo", que o gabarito marca como ACESSO.
+     */
+    public static final String VERSAO = "v2";
 
     static final String INICIO_DADOS = "<<<INICIO_DOS_DADOS>>>";
     static final String FIM_DADOS = "<<<FIM_DOS_DADOS>>>";
@@ -34,7 +39,7 @@ public final class PromptExtracao {
             Use apenas os tipos da lista:
             RESULTADO_FINANCEIRO (promessa de ganho em dinheiro), PRAZO_RESULTADO (prazo para obter o resultado), \
             QUANTIDADE_CONTEUDO (aulas, módulos ou horas), CERTIFICADO (certificado ou diploma), \
-            RECONHECIMENTO_OFICIAL (reconhecimento por órgão), BONUS (item extra prometido), ACESSO (duração do acesso), \
+            RECONHECIMENTO_OFICIAL (reconhecimento por órgão), BONUS (item extra prometido), ACESSO (duração, forma ou condição de acesso), \
             GARANTIA (garantia ou reembolso), PRECO_CONDICOES (preço e pagamento), CUSTO_ADICIONAL (custo extra \
             mencionado), DEPOIMENTO_RESULTADO (depoimento com resultado), ESCASSEZ_URGENCIA (urgência, vagas \
             limitadas), SAUDE_CURA (alegação de saúde ou cura), OUTRO (fora da lista).
