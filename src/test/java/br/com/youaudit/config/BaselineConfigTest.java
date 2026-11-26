@@ -19,7 +19,7 @@ class BaselineConfigTest {
     void carregaOArquivoDoProjeto() {
         TermosBaseline t = new BaselineConfig().termosBaseline(new ObjectMapper());
 
-        assertThat(t.fonte()).contains("hipótese de trabalho");
+        assertThat(t.fonte()).containsIgnoringCase("hipótese de trabalho");
         assertThat(t.termosProibidos()).isNotEmpty();
         assertThat(t.palavrasChavePorTipo()).containsKey(TipoAfirmacao.GARANTIA);
         assertThat(t.unidades()).containsKeys(UnidadeQuantidade.values());

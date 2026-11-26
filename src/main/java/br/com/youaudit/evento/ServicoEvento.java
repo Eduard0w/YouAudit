@@ -11,6 +11,7 @@ import br.com.youaudit.coleta.ProdutoRepository;
 import br.com.youaudit.coleta.ResultadoColeta;
 import br.com.youaudit.coleta.StatusProduto;
 import br.com.youaudit.config.ColetaPropriedades;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,8 @@ import java.util.Optional;
  *
  * <p>Entrada LINK (formulário): o id é atribuído pelo {@link AtribuidorIdLink} ("link-NN") e o nome é o próprio id.
  *
- * <p>Limite conhecido: com URL, o download acontece dentro da requisição (até ~11 s), então o 202 não volta
- * "na hora". Vira assíncrono quando o pipeline ganhar o @Async.
+ * <p>Auditoria EM_ANALISE criada → publica {@link AuditoriaCriada}; o {@link AgendadorAuditoria} roda o resto do
+ * pipeline em segundo plano. Limite conhecido: com URL, o DOWNLOAD ainda acontece dentro da requisição (até ~11 s).
  */
 @Service
 public class ServicoEvento {
@@ -49,11 +50,12 @@ public class ServicoEvento {
     private final EventoProdutoRepository eventos;
     private final AuditoriaRepository auditorias;
     private final Clock relogio;
+    private final ApplicationEventPublisher publicador;
 
     public ServicoEvento(LimpadorTexto limpador, CalculadoraHash calculadoraHash, ColetorPagina coletor,
                          AtribuidorIdLink atribuidorIdLink, ColetaPropriedades propriedadesColeta, ProdutoRepository produtos,
                          ConteudoItemRepository conteudos, EventoProdutoRepository eventos,
-                         AuditoriaRepository auditorias, Clock relogio) {
+                         AuditoriaRepository auditorias, Clock relogio, ApplicationEventPublisher publicador) {
         this.limpador = limpador;
         this.calculadoraHash = calculadoraHash;
         this.coletor = coletor;
@@ -64,6 +66,7 @@ public class ServicoEvento {
         this.eventos = eventos;
         this.auditorias = auditorias;
         this.relogio = relogio;
+        this.publicador = publicador;
     }
 
     /** Tudo numa transação só: ou grava produto, evento e auditoria juntos, ou não grava nada. */
@@ -129,6 +132,10 @@ public class ServicoEvento {
         auditorias.save(auditoria);
         EventoProduto evento = eventos.save(
                 new EventoProduto(produto, pedido.tipo(), hash, agora, ResultadoEvento.PROCESSADO));
+        if (auditoria.getStatus() == StatusAuditoria.EM_ANALISE) {
+            // Passos 3 a 9 rodam em segundo plano, depois do commit (AgendadorAuditoria).
+            publicador.publishEvent(new AuditoriaCriada(auditoria.getId(), produto.getId(), produto.getOrigem()));
+        }
         return new EventoResposta(evento.getId(), produto.getId(), ResultadoEvento.PROCESSADO, auditoria.getId(),
                 versao, auditoria.getStatus(), entrada);
     }

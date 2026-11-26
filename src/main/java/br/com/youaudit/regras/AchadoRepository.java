@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AchadoRepository extends JpaRepository<Achado, Long> {
 
     List<Achado> findByAuditoriaId(Long auditoriaId);
+
+    void deleteByAuditoriaId(Long auditoriaId);
 }

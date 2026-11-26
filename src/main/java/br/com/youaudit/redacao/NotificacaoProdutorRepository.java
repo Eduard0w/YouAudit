@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface NotificacaoProdutorRepository extends JpaRepository<NotificacaoProdutor, Long> {
 
     List<NotificacaoProdutor> findByAuditoriaId(Long auditoriaId);
+
+    void deleteByAuditoriaId(Long auditoriaId);
 }

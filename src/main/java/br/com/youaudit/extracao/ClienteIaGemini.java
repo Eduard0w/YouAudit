@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
@@ -30,16 +29,26 @@ import java.util.Map;
  *       não melhoram tentando de novo: falha na hora.</li>
  * </ul>
  */
-@Component
 public class ClienteIaGemini implements ClienteIa {
 
     private static final Logger log = LoggerFactory.getLogger(ClienteIaGemini.class);
 
     private final GeminiPropriedades propriedades;
+    private final String modelo;
     private final RestClient http;
 
+    /** Cliente do modelo principal ({@code gemini.model}). */
     public ClienteIaGemini(GeminiPropriedades propriedades) {
+        this(propriedades, propriedades.model());
+    }
+
+    /**
+     * Cliente de um modelo específico. Os dois beans (principal e secundário) são criados em {@code config.IaConfig}:
+     * cada modelo tem a sua cota gratuita diária.
+     */
+    public ClienteIaGemini(GeminiPropriedades propriedades, String modelo) {
         this.propriedades = propriedades;
+        this.modelo = modelo;
         HttpClient cliente = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(propriedades.timeoutMs())).build();
         JdkClientHttpRequestFactory fabrica = new JdkClientHttpRequestFactory(cliente);
         fabrica.setReadTimeout(Duration.ofMillis(propriedades.timeoutMs()));
@@ -61,7 +70,7 @@ public class ClienteIaGemini implements ClienteIa {
             }
             try {
                 JsonNode resposta = http.post()
-                        .uri("/models/{modelo}:generateContent", propriedades.model())
+                        .uri("/models/{modelo}:generateContent", modelo)
                         .header("x-goog-api-key", chave)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(corpo)
@@ -87,7 +96,7 @@ public class ClienteIaGemini implements ClienteIa {
 
     @Override
     public String modelo() {
-        return propriedades.model();
+        return modelo;
     }
 
     private static Map<String, Object> corpo(PedidoIa pedido) {

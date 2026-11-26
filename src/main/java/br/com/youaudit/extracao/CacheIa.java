@@ -9,7 +9,7 @@ import java.time.Instant;
 
 /**
  * Resposta da IA guardada para não chamar a API de novo com a mesma entrada.
- * Chave = hash da página + versão do prompt + tarefa. Assim a demo roda mesmo com a API fora do ar.
+ * Chave = tarefa + versão do prompt + modelo + SHA-256 da entrada (ver CacheRespostasIa). Assim a demo roda mesmo com a API fora do ar.
  */
 @Entity
 public class CacheIa {

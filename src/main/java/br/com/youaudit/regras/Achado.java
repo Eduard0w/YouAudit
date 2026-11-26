@@ -50,6 +50,13 @@ public class Achado {
     @Column(length = 4000)
     private String sugestao;
 
+    /** IA ou MODELO (texto de reserva). Guardado como texto para o pacote regras não depender do pacote redacao. */
+    private String sugestaoFonte;
+
+    /** Frase curta do código explicando o achado, em linguagem de indício (ex.: "a entrega cadastrada tem 28 aulas"). */
+    @Column(length = 1000)
+    private String detalhe;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoAchado estado;
@@ -79,6 +86,14 @@ public class Achado {
 
     public String getSugestao() { return sugestao; }
     public void setSugestao(String sugestao) { this.sugestao = sugestao; }
+
+    public String getSugestaoFonte() { return sugestaoFonte; }
+    public void setSugestaoFonte(String sugestaoFonte) { this.sugestaoFonte = sugestaoFonte; }
+
+    public String getDetalhe() { return detalhe; }
+    public void setDetalhe(String detalhe) {
+        this.detalhe = detalhe == null || detalhe.length() <= 1000 ? detalhe : detalhe.substring(0, 1000);
+    }
 
     public EstadoAchado getEstado() { return estado; }
     public void setEstado(EstadoAchado estado) { this.estado = estado; }

@@ -5,33 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>YouAudit — protótipo</title>
   <style>
-    :root { --borda: #d0d4da; --fundo: #f6f7f9; --texto: #1d232b; --suave: #5b6573; --azul: #1f5fbf; }
+    :root { --borda: #d0d4da; --fundo: #f6f7f9; --texto: #1d232b; --suave: #5b6573; --azul: #1f5fbf;
+            --alta: #a3231f; --media: #9a6200; --baixa: #2b6b3a; }
     * { box-sizing: border-box; }
     body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--texto); background: #fff; }
-    main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    main { max-width: 1150px; margin: 0 auto; padding: 24px 16px 48px; }
     h1 { font-size: 22px; margin: 0 0 4px; }
     h2 { font-size: 17px; margin: 28px 0 10px; }
+    h3 { font-size: 15px; margin: 20px 0 8px; }
     .subtitulo { color: var(--suave); margin: 0 0 16px; }
     .aviso { background: #fff6db; border: 1px solid #e8c45c; border-radius: 6px; padding: 10px 14px; }
     .aviso strong { display: block; }
     form, .painel { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    input[type=url] { flex: 1 1 420px; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; font: inherit; }
-    button { padding: 8px 14px; border: 1px solid var(--azul); background: var(--azul); color: #fff; border-radius: 6px; font: inherit; cursor: pointer; }
+    input[type=url], textarea, select { padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; font: inherit; }
+    input[type=url] { flex: 1 1 420px; }
+    textarea { width: 100%; min-height: 60px; }
+    button { padding: 7px 13px; border: 1px solid var(--azul); background: var(--azul); color: #fff; border-radius: 6px; font: inherit; cursor: pointer; }
     button.secundario { background: #fff; color: var(--azul); }
+    button.pequeno { padding: 3px 9px; font-size: 13px; }
     button:disabled { opacity: .6; cursor: progress; }
     .resultado { margin-top: 8px; color: var(--suave); min-height: 1.5em; }
-    .resultado.erro { color: #a3231f; }
+    .resultado.erro, .erro { color: var(--alta); }
+    .tabela { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--borda); vertical-align: top; }
     th { font-size: 13px; color: var(--suave); font-weight: 600; background: var(--fundo); }
-    td.num { font-variant-numeric: tabular-nums; }
-    .etiqueta { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid; }
+    td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    tbody#fila tr { cursor: pointer; }
+    tbody#fila tr:hover, tbody#fila tr.selecionada { background: #eef4fd; }
+    .etiqueta { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid; white-space: nowrap; }
     .entrada-EVENTO { color: #5b3ea8; border-color: #b7a6e3; background: #f3effc; }
     .entrada-LINK { color: #0f6b5c; border-color: #93cfc3; background: #eaf7f4; }
     .origem-REAL { color: #8a4b00; border-color: #e5b47a; background: #fdf3e6; }
     .origem-SIMULADO { color: #3d4a5c; border-color: #b8c0cc; background: #eef1f5; }
+    .faixa-ALTA, .sev-ALTA { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
+    .faixa-MEDIA, .sev-MEDIA { color: var(--media); border-color: #e5c27a; background: #fdf6e6; }
+    .faixa-BAIXA, .sev-BAIXA { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
+    .estado-CONFIRMADO { color: var(--alta); border-color: #e3a3a0; }
+    .estado-DESCARTADO { color: var(--suave); border-color: var(--borda); }
+    .estado-PENDENTE { color: var(--azul); border-color: #a9c2ea; }
     .motivo { color: var(--suave); font-size: 13px; }
     .vazio { color: var(--suave); padding: 14px 8px; }
+    #detalhe { border: 1px solid var(--borda); border-radius: 8px; padding: 4px 16px 16px; margin-top: 12px; }
+    .cabecalho { display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+    .pontos { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .achado { border: 1px solid var(--borda); border-left-width: 4px; border-radius: 6px; padding: 10px 12px; margin: 8px 0; }
+    .achado.sev-ALTA { border-left-color: var(--alta); background: #fff; }
+    .achado.sev-MEDIA { border-left-color: var(--media); background: #fff; }
+    .achado.sev-BAIXA { border-left-color: var(--baixa); background: #fff; }
+    .achado .titulo { font-weight: 600; }
+    .trecho { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--fundo); padding: 2px 6px; border-radius: 4px; white-space: pre-wrap; }
+    .pagina { white-space: pre-wrap; background: var(--fundo); border: 1px solid var(--borda); border-radius: 6px; padding: 12px; max-height: 420px; overflow: auto; font-size: 14px; }
+    mark { background: #ffe58a; padding: 0 1px; }
+    pre.relatorio { white-space: pre-wrap; background: var(--fundo); border: 1px solid var(--borda); border-radius: 6px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+    .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
+    .sugestao-liberar { background: #eef8f0; border: 1px solid #9fcca9; border-radius: 6px; padding: 8px 12px; }
   </style>
 </head>
 <body>
@@ -40,10 +69,18 @@
   <p class="subtitulo">Promessas da página de venda × regras e entrega. Os alertas são indícios para revisão humana: o sistema não aprova nem reprova produto.</p>
 
   <div class="aviso" role="note">
-    <strong>Protótipo com gatilho simulado.</strong>
-    O evento "produto enviado para aprovação" é simulado. Itens <b>SIMULADO</b> são fictícios. Itens <b>REAL</b> vêm de
+    <strong>Protótipo com gatilho simulado e dados fictícios.</strong>
+    O evento "produto enviado para aprovação" é simulado. Itens <b>SIMULADO</b> são produtos fictícios. Itens <b>REAL</b> vêm de
     páginas públicas e aparecem só com id anônimo (pagina-NN, link-NN). Os dois nunca entram juntos numa mesma métrica.
+    O relatório ao produtor é um envio simulado.
   </div>
+
+  <h2>Simulador (gatilho simulado)</h2>
+  <div class="painel">
+    <button id="botao-simulador" type="button">Iniciar simulador (18 produtos fictícios)</button>
+    <span class="motivo">Dispara um evento "produto enviado" a cada 1,5 s; a fila se enche sozinha.</span>
+  </div>
+  <div id="resultado-simulador" class="resultado" aria-live="polite"></div>
 
   <h2>Auditar um link</h2>
   <form id="form-link">
@@ -55,47 +92,66 @@
   <h2>Lote de links reais</h2>
   <div class="painel">
     <button id="botao-lote" type="button" class="secundario">Disparar lote (data/real/urls.txt)</button>
-    <span class="motivo">Um evento por segundo, em segundo plano.</span>
+    <span class="motivo">Coleta as páginas. Páginas REAIS não passam pela IA sozinhas: use "Processar" no detalhe.</span>
   </div>
   <div id="resultado-lote" class="resultado" aria-live="polite"></div>
 
   <h2>Fila de revisão</h2>
-  <table>
-    <thead>
-    <tr>
-      <th>Produto</th><th>Origem</th><th>Entrada</th><th>Versão</th><th>Auditoria</th>
-      <th>Pontuação</th><th>Situação do produto</th><th>Criada em</th>
-    </tr>
-    </thead>
-    <tbody id="fila"></tbody>
-  </table>
-  <p class="motivo">Atualiza a cada 3 s. Pontuação "não calculada": a pontuação ainda não foi implementada nesta versão.</p>
+  <div class="tabela">
+    <table>
+      <thead>
+      <tr>
+        <th>Produto</th><th>Origem</th><th>Entrada</th><th>Versão</th><th>Auditoria</th>
+        <th>Pontuação</th><th>Situação do produto</th><th>Criada em</th>
+      </tr>
+      </thead>
+      <tbody id="fila"></tbody>
+    </table>
+  </div>
+  <p class="motivo">Atualiza a cada 3 s. Clique numa linha para ver o detalhe. A pontuação só ordena a fila; quem decide é uma pessoa.</p>
+
+  <section id="detalhe" hidden aria-live="polite"></section>
+
+  <h2>Comparativo baseline × YouAudit</h2>
+  <div class="painel">
+    <select id="divisao" aria-label="Divisão do gabarito">
+      <option value="DESENVOLVIMENTO">DESENVOLVIMENTO</option>
+      <option value="RESERVADO">RESERVADO (só no Dia 3, uma vez, depois de congelar)</option>
+    </select>
+    <button id="botao-comparativo" type="button" class="secundario">Calcular</button>
+  </div>
+  <p class="motivo">REAL e SIMULADO ficam sempre separados. Os números são calculados pelo código sobre o que está no banco; "não medido" quando não há dado.</p>
+  <div id="comparativo"></div>
 </main>
 
 <script>
   // Todo dado vindo do servidor entra na tela por textContent, nunca por innerHTML:
   // assim nenhum texto de página consegue virar HTML ou script (regra 3: texto de página é dado).
 
-  function celula(texto, classe) {
-    const td = document.createElement('td');
-    if (classe) td.className = classe;
-    td.textContent = texto;
-    return td;
+  const NOMES_DECISAO = { LIBERAR: 'Liberar', PEDIR_AJUSTE: 'Pedir ajuste', ESCALAR: 'Escalar' };
+  let selecionado = null;
+
+  function el(tag, texto, classe) {
+    const e = document.createElement(tag);
+    if (classe) e.className = classe;
+    if (texto != null) e.textContent = texto;
+    return e;
+  }
+  function celula(texto, classe) { return el('td', texto, classe); }
+  function etiqueta(valor, prefixo) { return el('span', valor, 'etiqueta ' + prefixo + '-' + valor); }
+  function celulaEtiqueta(valor, prefixo) { const td = el('td'); td.appendChild(etiqueta(valor, prefixo)); return td; }
+  function dataHora(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
+  function mostrar(id, texto, erro) {
+    const e = document.getElementById(id);
+    e.textContent = texto;
+    e.classList.toggle('erro', !!erro);
+  }
+  async function mensagemDeErro(resposta) {
+    try { const j = await resposta.json(); return j.message || ('HTTP ' + resposta.status); }
+    catch (e) { return 'HTTP ' + resposta.status; }
   }
 
-  function etiqueta(valor, prefixo) {
-    const td = document.createElement('td');
-    const span = document.createElement('span');
-    span.className = 'etiqueta ' + prefixo + '-' + valor;
-    span.textContent = valor;
-    td.appendChild(span);
-    return td;
-  }
-
-  function dataHora(iso) {
-    return iso ? new Date(iso).toLocaleString('pt-BR') : '—';
-  }
-
+  // ---------- Fila ----------
   async function atualizarFila() {
     const corpo = document.getElementById('fila');
     let itens;
@@ -108,39 +164,265 @@
     }
     corpo.replaceChildren();
     if (itens.length === 0) {
-      const tr = document.createElement('tr');
-      const td = celula('Fila vazia. Audite um link ou dispare o lote.', 'vazio');
+      const tr = el('tr');
+      const td = celula('Fila vazia. Inicie o simulador, audite um link ou dispare o lote.', 'vazio');
       td.colSpan = 8;
       tr.appendChild(td);
       corpo.appendChild(tr);
       return;
     }
     for (const item of itens) {
-      const tr = document.createElement('tr');
+      const tr = el('tr');
+      if (item.produtoId === selecionado) tr.classList.add('selecionada');
+      tr.addEventListener('click', () => abrirDetalhe(item.produtoId));
       tr.appendChild(celula(item.produtoId));
-      tr.appendChild(etiqueta(item.origem, 'origem'));
-      tr.appendChild(etiqueta(item.entrada, 'entrada'));
+      tr.appendChild(celulaEtiqueta(item.origem, 'origem'));
+      tr.appendChild(celulaEtiqueta(item.entrada, 'entrada'));
       tr.appendChild(celula(String(item.versao), 'num'));
       const status = celula(item.statusAuditoria);
-      if (item.motivoFalha) {
-        const motivo = document.createElement('div');
-        motivo.className = 'motivo';
-        motivo.textContent = item.motivoFalha;
-        status.appendChild(motivo);
-      }
+      if (item.motivoFalha) status.appendChild(el('div', item.motivoFalha, 'motivo'));
       tr.appendChild(status);
-      tr.appendChild(celula(item.pontuacao == null ? 'não calculada' : item.pontuacao + ' (' + item.faixa + ')', 'num'));
+      const pont = celula(item.pontuacao == null ? '—' : String(item.pontuacao) + ' ', 'num');
+      if (item.faixa) pont.appendChild(etiqueta(item.faixa, 'faixa'));
+      tr.appendChild(pont);
       tr.appendChild(celula(item.statusProduto || '—'));
       tr.appendChild(celula(dataHora(item.criadaEm)));
       corpo.appendChild(tr);
     }
   }
 
-  function mostrar(id, texto, erro) {
-    const el = document.getElementById(id);
-    el.textContent = texto;
-    el.classList.toggle('erro', !!erro);
+  // ---------- Detalhe ----------
+  async function abrirDetalhe(id) {
+    selecionado = id;
+    const caixa = document.getElementById('detalhe');
+    caixa.hidden = false;
+    let d, versoes, relatorio = null;
+    try {
+      const r = await fetch('/api/produtos/' + encodeURIComponent(id));
+      if (!r.ok) { caixa.replaceChildren(el('p', 'Não consegui abrir ' + id + ': ' + await mensagemDeErro(r), 'erro')); return; }
+      d = await r.json();
+      versoes = await (await fetch('/api/produtos/' + encodeURIComponent(id) + '/auditorias')).json();
+      const rr = await fetch('/api/produtos/' + encodeURIComponent(id) + '/relatorio');
+      if (rr.ok) relatorio = await rr.json();
+    } catch (e) {
+      caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro'));
+      return;
+    }
+    desenharDetalhe(caixa, d, versoes, relatorio);
+    atualizarFila();
   }
+
+  function desenharDetalhe(caixa, d, versoes, relatorio) {
+    caixa.replaceChildren();
+    const a = d.auditoria;
+    const cab = el('div', null, 'cabecalho');
+    cab.appendChild(el('h2', d.id + (d.nome && d.nome !== d.id ? ' — ' + d.nome : '')));
+    cab.appendChild(etiqueta(d.origem, 'origem'));
+    cab.appendChild(el('span', 'versão ' + a.versao + ' · ' + a.status + ' · produto ' + (d.status || '—'), 'motivo'));
+    caixa.appendChild(cab);
+    if (d.origem === 'SIMULADO') caixa.appendChild(el('p', 'Produto fictício (dados simulados).', 'motivo'));
+    if (a.motivoFalha) caixa.appendChild(el('p', 'Motivo: ' + a.motivoFalha, 'erro'));
+
+    // Ações do pipeline
+    const acoes = el('div', null, 'painel');
+    if (a.status === 'EM_ANALISE' || a.status === 'FALHOU') {
+      const b = el('button', 'Processar (roda a IA nesta versão)');
+      b.addEventListener('click', () => acao(b, '/api/produtos/' + encodeURIComponent(d.id) + '/processar', null, 'Processamento agendado.'));
+      acoes.appendChild(b);
+      if (d.origem === 'REAL') acoes.appendChild(el('span', 'Páginas reais só passam pela IA por este botão (as RESERVADO só depois do congelamento).', 'motivo'));
+    }
+    if (d.origem === 'SIMULADO' && d.id === 'sim-001') {
+      const b = el('button', 'Reenviar versão corrigida (simulado)', 'secundario');
+      b.addEventListener('click', () => acao(b, '/api/simulador/reenviar/' + encodeURIComponent(d.id), null, 'Versão corrigida enviada.'));
+      acoes.appendChild(b);
+    }
+    acoes.appendChild(el('span', '', 'resultado'));
+    caixa.appendChild(acoes);
+
+    // Pontuação e a conta
+    if (a.pontuacao != null) {
+      const p = el('div', null, 'cabecalho');
+      p.appendChild(el('span', String(a.pontuacao), 'pontos'));
+      p.appendChild(etiqueta(a.faixa, 'faixa'));
+      const conta = d.conta.map(x => x.peso).join(' + ');
+      p.appendChild(el('span', d.conta.length ? 'conta: ' + conta + ' (cada tipo de achado conta uma vez; teto 100)' : 'nenhum achado', 'motivo'));
+      caixa.appendChild(p);
+    }
+    if (d.liberacaoSugerida) {
+      caixa.appendChild(el('p', 'Liberação sugerida: faixa BAIXA e nenhum achado de severidade alta. O sistema não libera sozinho: a decisão é sua.', 'sugestao-liberar'));
+    }
+    if (a.cruzamentoPulado) caixa.appendChild(el('p', 'Sem entrega cadastrada: o cruzamento com a entrega foi pulado.', 'motivo'));
+    if (a.status === 'CONCLUIDA') {
+      caixa.appendChild(el('p', d.afirmacoes.length + ' afirmações extraídas pela IA e conferidas · ' + d.afirmacoesDescartadas +
+        ' recusadas pelo código na extração · ' + d.descartesCruzamento + ' recusadas no cruzamento.', 'motivo'));
+    }
+
+    // Achados
+    caixa.appendChild(el('h3', 'Achados (' + d.achados.length + ')'));
+    if (d.achados.length === 0) caixa.appendChild(el('p', a.status === 'CONCLUIDA' ? 'Nenhum achado.' : 'Ainda não há achados.', 'motivo'));
+    for (const x of d.achados) caixa.appendChild(cartaoAchado(x, d.id));
+
+    // Página com trechos destacados e entrega
+    const colunas = el('div', null, 'colunas');
+    const c1 = el('div');
+    c1.appendChild(el('h3', 'Texto da página (trechos dos achados destacados)'));
+    c1.appendChild(paginaDestacada(d.paginaTexto || '', d.achados.map(x => x.evidenciaPagina).filter(Boolean)));
+    colunas.appendChild(c1);
+    const c2 = el('div');
+    c2.appendChild(el('h3', 'Entrega cadastrada (' + d.entrega.length + ' itens)'));
+    if (d.entrega.length === 0) c2.appendChild(el('p', 'Sem entrega cadastrada.', 'motivo'));
+    const lista = el('ul');
+    const trechosEntrega = d.achados.map(x => x.evidenciaEntrega).filter(Boolean);
+    for (const i of d.entrega) {
+      const li = el('li');
+      li.appendChild(el('b', i.tipo + ' '));
+      li.appendChild(document.createTextNode(i.titulo));
+      if (i.descricao) { li.appendChild(document.createTextNode(' — ')); li.appendChild(destacar(i.descricao, trechosEntrega)); }
+      lista.appendChild(li);
+    }
+    c2.appendChild(lista);
+    colunas.appendChild(c2);
+    caixa.appendChild(colunas);
+
+    // Versões
+    caixa.appendChild(el('h3', 'Versões'));
+    const tv = el('table');
+    const cabv = el('tr');
+    ['Versão', 'Auditoria', 'Pontuação', 'Tipos de achado', 'Criada em'].forEach(t => cabv.appendChild(el('th', t)));
+    tv.appendChild(cabv);
+    for (const v of versoes) {
+      const tr = el('tr');
+      tr.appendChild(celula(String(v.versao), 'num'));
+      tr.appendChild(celula(v.status));
+      tr.appendChild(celula(v.pontuacao == null ? '—' : v.pontuacao + ' (' + v.faixa + ')', 'num'));
+      tr.appendChild(celula(v.tiposDeAchado.join(', ') || '—'));
+      tr.appendChild(celula(dataHora(v.criadaEm)));
+      tv.appendChild(tr);
+    }
+    caixa.appendChild(tv);
+
+    // Relatório
+    caixa.appendChild(el('h3', 'Relatório ao produtor (envio simulado)'));
+    caixa.appendChild(relatorio ? el('pre', relatorio.conteudo, 'relatorio') : el('p', 'Ainda não há relatório.', 'motivo'));
+
+    // Decisão
+    caixa.appendChild(el('h3', 'Decisão (só uma pessoa decide)'));
+    for (const dec of d.decisoes) {
+      caixa.appendChild(el('p', dataHora(dec.data) + ' — ' + NOMES_DECISAO[dec.decisao] + ': ' + dec.motivo, 'motivo'));
+    }
+    const form = el('form');
+    const sel = el('select');
+    sel.setAttribute('aria-label', 'Decisão');
+    Object.entries(NOMES_DECISAO).forEach(([v, t]) => { const o = el('option', t); o.value = v; sel.appendChild(o); });
+    const motivo = el('textarea');
+    motivo.placeholder = 'Motivo (obrigatório)';
+    motivo.required = true;
+    const enviar = el('button', 'Registrar decisão');
+    enviar.type = 'submit';
+    const saida = el('span', '', 'resultado');
+    form.append(sel, motivo, enviar, saida);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await acao(enviar, '/api/produtos/' + encodeURIComponent(d.id) + '/decisao',
+        { decisao: sel.value, motivo: motivo.value }, 'Decisão registrada.');
+    });
+    caixa.appendChild(form);
+  }
+
+  function cartaoAchado(x, produtoId) {
+    const c = el('div', null, 'achado sev-' + x.severidade);
+    const t = el('div', null, 'cabecalho');
+    t.appendChild(el('span', x.regraDescricao || x.regra, 'titulo'));
+    t.appendChild(etiqueta(x.severidade, 'sev'));
+    t.appendChild(el('span', 'peso ' + x.peso, 'motivo'));
+    t.appendChild(etiqueta(x.estado, 'estado'));
+    c.appendChild(t);
+    if (x.evidenciaPagina) { const p = el('div', 'Página: '); p.appendChild(el('span', x.evidenciaPagina, 'trecho')); c.appendChild(p); }
+    if (x.evidenciaEntrega) { const p = el('div', 'Entrega: '); p.appendChild(el('span', x.evidenciaEntrega, 'trecho')); c.appendChild(p); }
+    if (x.detalhe) c.appendChild(el('div', x.detalhe, 'motivo'));
+    if (x.sugestao) {
+      const s = el('div', 'Sugestão ao produtor (' + (x.sugestaoFonte === 'IA' ? 'redigida pela IA e conferida' : 'texto padrão') + '): ');
+      s.appendChild(el('span', x.sugestao));
+      c.appendChild(s);
+    }
+    const b = el('div', null, 'painel');
+    const confirmar = el('button', 'Confirmar', 'pequeno');
+    const descartar = el('button', 'Descartar', 'pequeno secundario');
+    confirmar.addEventListener('click', () => revisar(x.id, 'CONFIRMADO', produtoId, confirmar));
+    descartar.addEventListener('click', () => revisar(x.id, 'DESCARTADO', produtoId, descartar));
+    b.append(confirmar, descartar);
+    c.appendChild(b);
+    return c;
+  }
+
+  async function revisar(achadoId, decisao, produtoId, botao) {
+    botao.disabled = true;
+    try {
+      const r = await fetch('/api/achados/' + achadoId + '/revisao', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decisao: decisao })
+      });
+      if (r.ok) abrirDetalhe(produtoId);
+    } finally { botao.disabled = false; }
+  }
+
+  async function acao(botao, url, corpo, ok) {
+    const saida = botao.parentElement.querySelector('.resultado');
+    botao.disabled = true;
+    try {
+      const r = await fetch(url, corpo ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }
+                                       : { method: 'POST' });
+      if (!r.ok) { if (saida) { saida.textContent = await mensagemDeErro(r); saida.classList.add('erro'); } return; }
+      if (saida) saida.textContent = ok;
+      setTimeout(() => abrirDetalhe(selecionado), 800);
+    } catch (e) {
+      if (saida) { saida.textContent = 'Não foi possível falar com o servidor.'; saida.classList.add('erro'); }
+    } finally { botao.disabled = false; }
+  }
+
+  // Destaca os trechos (comparação exata, como a conferência de trecho literal) sem usar innerHTML.
+  function destacar(texto, trechos) {
+    const marcas = [];
+    for (const t of trechos) {
+      let i = texto.indexOf(t);
+      while (t && i !== -1) { marcas.push([i, i + t.length]); i = texto.indexOf(t, i + t.length); }
+    }
+    marcas.sort((x, y) => x[0] - y[0]);
+    const juntas = [];
+    for (const m of marcas) {
+      if (juntas.length && m[0] <= juntas[juntas.length - 1][1]) juntas[juntas.length - 1][1] = Math.max(juntas[juntas.length - 1][1], m[1]);
+      else juntas.push(m.slice());
+    }
+    const frag = document.createDocumentFragment();
+    let pos = 0;
+    for (const [ini, fim] of juntas) {
+      frag.appendChild(document.createTextNode(texto.slice(pos, ini)));
+      frag.appendChild(el('mark', texto.slice(ini, fim)));
+      pos = fim;
+    }
+    frag.appendChild(document.createTextNode(texto.slice(pos)));
+    const span = el('span');
+    span.appendChild(frag);
+    return span;
+  }
+  function paginaDestacada(texto, trechos) {
+    const div = el('div', null, 'pagina');
+    div.appendChild(destacar(texto, trechos));
+    return div;
+  }
+
+  // ---------- Botões do topo ----------
+  document.getElementById('botao-simulador').addEventListener('click', async () => {
+    const botao = document.getElementById('botao-simulador');
+    botao.disabled = true;
+    try {
+      const r = await fetch('/api/simulador/iniciar', { method: 'POST' });
+      if (r.status === 409) mostrar('resultado-simulador', 'O simulador já está rodando.', true);
+      else if (!r.ok) mostrar('resultado-simulador', 'Erro: ' + await mensagemDeErro(r), true);
+      else { const j = await r.json(); mostrar('resultado-simulador', j.eventosAgendados + ' eventos simulados agendados.'); }
+    } catch (e) {
+      mostrar('resultado-simulador', 'Não foi possível falar com o servidor.', true);
+    } finally { botao.disabled = false; }
+  });
 
   document.getElementById('form-link').addEventListener('submit', async (evento) => {
     evento.preventDefault();
@@ -154,20 +436,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'PRODUTO_ENVIADO', entrada: 'LINK', produto: { url: url, origem: 'REAL' } })
       });
-      if (resposta.status === 400) {
-        mostrar('resultado-link', 'Pedido inválido: confira se a URL começa com http:// ou https://.', true);
-        return;
-      }
-      if (!resposta.ok) {
-        mostrar('resultado-link', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
-        return;
-      }
+      if (resposta.status === 400) { mostrar('resultado-link', 'Pedido inválido: confira se a URL começa com http:// ou https://.', true); return; }
+      if (!resposta.ok) { mostrar('resultado-link', 'Erro no servidor (HTTP ' + resposta.status + ').', true); return; }
       const r = await resposta.json();
       if (r.resultado === 'IGNORADO_MESMO_HASH') {
         mostrar('resultado-link', r.produtoId + ': página igual à da última auditoria; nada a fazer.');
       } else {
-        mostrar('resultado-link', r.produtoId + ': auditoria versão ' + r.versao + ' — ' + r.statusAuditoria + '.',
-          r.statusAuditoria === 'FALHOU');
+        mostrar('resultado-link', r.produtoId + ': auditoria versão ' + r.versao + ' — ' + r.statusAuditoria + '.', r.statusAuditoria === 'FALHOU');
       }
       atualizarFila();
     } catch (e) {
@@ -182,13 +457,10 @@
     botao.disabled = true;
     try {
       const resposta = await fetch('/api/lote/urls', { method: 'POST' });
-      if (resposta.status === 409) {
-        mostrar('resultado-lote', 'Já existe um lote em andamento.', true);
-      } else if (resposta.status === 404) {
-        mostrar('resultado-lote', 'Arquivo data/real/urls.txt não encontrado.', true);
-      } else if (!resposta.ok) {
-        mostrar('resultado-lote', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
-      } else {
+      if (resposta.status === 409) mostrar('resultado-lote', 'Já existe um lote em andamento.', true);
+      else if (resposta.status === 404) mostrar('resultado-lote', 'Arquivo data/real/urls.txt não encontrado.', true);
+      else if (!resposta.ok) mostrar('resultado-lote', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
+      else {
         const r = await resposta.json();
         let texto = r.eventosAgendados + ' links agendados, um a cada ' + (r.intervaloMs / 1000) + ' s.';
         if (r.linhasInvalidas.length > 0) texto += ' Linhas ignoradas (formato inválido): ' + r.linhasInvalidas.join(', ') + '.';
@@ -199,6 +471,62 @@
     } finally {
       botao.disabled = false;
     }
+  });
+
+  // ---------- Comparativo ----------
+  function pct(v) { return v == null ? 'não medido' : (v * 100).toFixed(1).replace('.', ',') + '%'; }
+  function tabelaMetricas(linhas) {
+    const t = el('table');
+    const c = el('tr');
+    ['Sistema', 'Acertos (VP)', 'Falsos positivos', 'Não achados (FN)', 'Precisão', 'Cobertura', 'F1'].forEach(x => c.appendChild(el('th', x)));
+    t.appendChild(c);
+    for (const [nome, m] of linhas) {
+      const tr = el('tr');
+      tr.appendChild(celula(nome));
+      if (!m) { const td = celula('não medido'); td.colSpan = 6; tr.appendChild(td); }
+      else [m.vp, m.fp, m.fn].forEach(v => tr.appendChild(celula(String(v), 'num')));
+      if (m) [m.precisao, m.cobertura, m.f1].forEach(v => tr.appendChild(celula(pct(v), 'num')));
+      t.appendChild(tr);
+    }
+    return t;
+  }
+  document.getElementById('botao-comparativo').addEventListener('click', async () => {
+    const caixa = document.getElementById('comparativo');
+    const divisao = document.getElementById('divisao').value;
+    let c;
+    try {
+      const r = await fetch('/api/avaliacao/comparativo?divisao=' + divisao);
+      if (!r.ok) { caixa.replaceChildren(el('p', await mensagemDeErro(r), 'erro')); return; }
+      c = await r.json();
+    } catch (e) { caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro')); return; }
+    caixa.replaceChildren();
+    const r = c.real;
+    caixa.appendChild(el('h3', 'REAL — teste A: extração de afirmações (' + divisao + ')'));
+    if (!r) caixa.appendChild(el('p', 'não medido', 'motivo'));
+    else {
+      caixa.appendChild(el('p', 'Páginas medidas: ' + (r.paginasMedidas.join(', ') || 'nenhuma') +
+        ' · sem saída da IA: ' + (r.paginasSemSaidaDaIa.join(', ') || 'nenhuma') + ' · ' + r.afirmacoesNoGabarito +
+        ' afirmações do gabarito nessas páginas' + (r.incluiOutro ? '' : ' (' + r.outroForaDaConta + ' do tipo OUTRO fora da conta)') + '.', 'motivo'));
+      caixa.appendChild(tabelaMetricas([['Baseline', r.baseline], ['YouAudit', r.youaudit]]));
+      const total = r.trechosAceitos + r.trechosRecusados;
+      caixa.appendChild(el('p', 'Trechos literais válidos (YouAudit): ' + r.trechosAceitos + ' de ' + total +
+        (total ? ' (' + pct(r.trechosAceitos / total) + ')' : ''), 'motivo'));
+      caixa.appendChild(el('p', 'Achados em páginas reais (B1/B2): ' + r.achadosB1B2, 'motivo'));
+    }
+    const s = c.simulado;
+    caixa.appendChild(el('h3', 'SIMULADO — teste B3: divergências plantadas em produtos fictícios'));
+    caixa.appendChild(el('p', 'Prova o funcionamento técnico, não uma divergência real.', 'motivo'));
+    if (!s) caixa.appendChild(el('p', 'não medido', 'motivo'));
+    else {
+      caixa.appendChild(el('p', 'Produtos medidos: ' + s.produtosMedidos.length + ' · sem auditoria concluída: ' +
+        (s.produtosSemAuditoriaConcluida.join(', ') || 'nenhum'), 'motivo'));
+      caixa.appendChild(tabelaMetricas([['Baseline', s.baseline], ['YouAudit', s.youaudit]]));
+      caixa.appendChild(el('p', 'Só o YouAudit encontrou: ' + s.soYouAudit.length +
+        (s.soYouAudit.length ? ' (' + s.soYouAudit.map(x => x.produtoId + ' ' + x.tipo).join('; ') + ')' : '') +
+        ' · só o baseline encontrou: ' + s.soBaseline.length +
+        (s.soBaseline.length ? ' (' + s.soBaseline.map(x => x.produtoId + ' ' + x.tipo).join('; ') + ')' : ''), 'motivo'));
+    }
+    for (const a of c.avisos) caixa.appendChild(el('p', 'Aviso: ' + a, 'motivo'));
   });
 
   atualizarFila();

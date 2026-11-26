@@ -59,6 +59,9 @@ public class Auditoria {
     @Column(length = 2000)
     private String motivoFalha;
 
+    /** true quando o produto não tinha entrega cadastrada e o cruzamento foi pulado (fica registrado, CONTRATOS.md §3). */
+    private Boolean cruzamentoPulado;
+
     protected Auditoria() {
     }
 
@@ -92,6 +95,9 @@ public class Auditoria {
 
     public Instant getConcluidaEm() { return concluidaEm; }
     public void setConcluidaEm(Instant concluidaEm) { this.concluidaEm = concluidaEm; }
+
+    public Boolean getCruzamentoPulado() { return cruzamentoPulado; }
+    public void setCruzamentoPulado(Boolean cruzamentoPulado) { this.cruzamentoPulado = cruzamentoPulado; }
 
     public String getMotivoFalha() { return motivoFalha; }
     public void setMotivoFalha(String motivoFalha) { this.motivoFalha = motivoFalha; }

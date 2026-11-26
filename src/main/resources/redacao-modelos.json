@@ -1,0 +1,12 @@
+{
+  "_leia": "Textos de RESERVA da redação: usados quando a IA falha, está sem cota ou escreve algo que o código recusa (ex.: número que não existe nos dados do produto). {trecho} é trocado pelo trecho da evidência. Linguagem de indício, sem acusar (regra 4). Hipótese de trabalho: Eduardo revisa.",
+  "modelos": {
+    "TERMO_PROIBIDO": "O trecho \"{trecho}\" usa uma expressão que pode estar em desacordo com as regras da plataforma. Sugestão: retire a expressão ou troque por uma descrição do que o curso ensina, sem garantir resultado.",
+    "PROMESSA_RESULTADO_SEM_RESSALVA": "O trecho \"{trecho}\" fala de um resultado sem avisar, por perto, que os resultados variam de pessoa para pessoa. Sugestão: inclua logo ao lado um aviso claro de que o resultado não é garantido e depende de cada aluno.",
+    "RECONHECIMENTO_SEM_COMPROVANTE": "O trecho \"{trecho}\" cita um reconhecimento oficial, e não encontramos comprovante anexado. Sugestão: anexe o comprovante ao cadastro ou retire a menção.",
+    "QUANTIDADE_DIVERGENTE": "O trecho \"{trecho}\" pode estar em desacordo com a quantidade cadastrada na entrega. Sugestão: ajuste o número na página para o que o aluno realmente recebe, ou complete a entrega.",
+    "ELEMENTO_AUSENTE_NA_ENTREGA": "O trecho \"{trecho}\" promete um item que não encontramos na entrega cadastrada. Sugestão: cadastre o item na entrega ou retire a promessa da página.",
+    "CUSTO_OMITIDO": "A entrega indica um custo ou requisito pago (\"{trecho}\") que a página não informa. Sugestão: informe na página, de forma visível, que esse custo existe e não está incluso no preço.",
+    "INFO_ESSENCIAL_AUSENTE": "{trecho} Sugestão: inclua essa informação na página de venda, em local fácil de achar."
+  }
+}

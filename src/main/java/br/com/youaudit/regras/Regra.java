@@ -28,6 +28,13 @@ public class Regra {
 
     private int peso;
 
+    /**
+     * Gravidade de um achado desta regra. Serve para a "liberação sugerida": faixa BAIXA e nenhum achado ALTA
+     * (CONTRATOS.md §4). Valor inicial em data.sql, hipótese de trabalho.
+     */
+    @Enumerated(EnumType.STRING)
+    private Severidade severidade;
+
     private boolean ativa;
 
     /** De onde veio a regra ou o peso. Ex.: "hipótese de trabalho" enquanto não for conferido. */
@@ -40,6 +47,7 @@ public class Regra {
     public TipoAchado getCodigo() { return codigo; }
     public String getDescricao() { return descricao; }
     public int getPeso() { return peso; }
+    public Severidade getSeveridade() { return severidade; }
     public boolean isAtiva() { return ativa; }
     public String getFonte() { return fonte; }
 }

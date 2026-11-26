@@ -132,6 +132,6 @@ class ClienteIaGeminiTest {
     }
 
     private GeminiPropriedades propriedades(String chave) {
-        return new GeminiPropriedades(chave, "modelo-teste", servidor.url("/v1beta"), 2000, 2, 0);
+        return new GeminiPropriedades(chave, "modelo-teste", servidor.url("/v1beta"), 2000, 2, 0, "modelo-secundario-teste");
     }
 }
