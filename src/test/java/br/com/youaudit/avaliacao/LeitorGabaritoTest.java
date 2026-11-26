@@ -30,6 +30,14 @@ class LeitorGabaritoTest {
     }
 
     @Test
+    void contaRegistrosSemCabecalhoMesmoComQuebraDeLinhaNoCampo() throws IOException {
+        Path csv = pasta.resolve("achados.csv");
+        Files.writeString(csv, "id,observacao\nb1,\"linha 1\nlinha 2\"\n");
+        assertThat(LeitorGabarito.contarRegistros(csv)).isEqualTo(1);
+        assertThat(LeitorGabarito.contarRegistros(pasta.resolve("nao-existe.csv"))).isEqualTo(-1);
+    }
+
+    @Test
     void cabecalhoErradoDerrubaALeitura() {
         assertThatThrownBy(() -> ler("id,tipo\na1,OUTRO")).hasMessageContaining("cabeçalho");
     }

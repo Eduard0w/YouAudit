@@ -508,6 +508,8 @@
         ' · sem saída da IA: ' + (r.paginasSemSaidaDaIa.join(', ') || 'nenhuma') + ' · ' + r.afirmacoesNoGabarito +
         ' afirmações do gabarito nessas páginas' + (r.incluiOutro ? '' : ' (' + r.outroForaDaConta + ' do tipo OUTRO fora da conta)') + '.', 'motivo'));
       caixa.appendChild(tabelaMetricas([['Baseline', r.baseline], ['YouAudit', r.youaudit]]));
+      caixa.appendChild(el('p', 'Agrupadas (pedaços de um item do gabarito já acertado; não contam como acerto nem como erro): baseline ' +
+        r.agrupadasBaseline + ', YouAudit ' + r.agrupadasYouaudit + '.', 'motivo'));
       const total = r.trechosAceitos + r.trechosRecusados;
       caixa.appendChild(el('p', 'Trechos literais válidos (YouAudit): ' + r.trechosAceitos + ' de ' + total +
         (total ? ' (' + pct(r.trechosAceitos / total) + ')' : ''), 'motivo'));

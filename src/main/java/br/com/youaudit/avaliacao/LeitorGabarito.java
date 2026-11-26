@@ -63,6 +63,15 @@ public class LeitorGabarito {
         return rotulos;
     }
 
+    /** Quantos registros (sem o cabeçalho) um CSV tem; -1 se o arquivo não existe ou não pôde ser lido. */
+    static int contarRegistros(Path arquivo) {
+        try {
+            return Math.max(0, linhas(Files.readString(arquivo, StandardCharsets.UTF_8)).size() - 1);
+        } catch (IOException e) {
+            return -1;
+        }
+    }
+
     /** Divide o CSV em registros e campos. Aspas duplas dentro de campo com aspas são escritas "". */
     static List<List<String>> linhas(String csv) {
         String texto = csv.replace("\r\n", "\n");

@@ -19,9 +19,11 @@ import br.com.youaudit.regras.AchadoRepository;
 import br.com.youaudit.regras.TipoAchado;
 import br.com.youaudit.simulador.ArquivoSimulado;
 import br.com.youaudit.simulador.LeitorArquivoSimulado;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -57,11 +59,13 @@ public class ServicoComparativo {
     private final VerificadorBaseline baseline;
     private final LimpadorTexto limpador;
     private final CalculadoraHash hash;
+    private final Path gabaritoAchados;
 
     public ServicoComparativo(LeitorGabarito gabarito, LeitorArquivoSimulado simulados, ProdutoRepository produtos,
                               AuditoriaRepository auditorias, AfirmacaoRepository afirmacoes,
                               AfirmacaoDescartadaRepository descartadas, AchadoRepository achados,
-                              VerificadorBaseline baseline, LimpadorTexto limpador, CalculadoraHash hash) {
+                              VerificadorBaseline baseline, LimpadorTexto limpador, CalculadoraHash hash,
+                              @Value("${avaliacao.gabarito-achados}") String gabaritoAchados) {
         this.gabarito = gabarito;
         this.simulados = simulados;
         this.produtos = produtos;
@@ -72,6 +76,7 @@ public class ServicoComparativo {
         this.baseline = baseline;
         this.limpador = limpador;
         this.hash = hash;
+        this.gabaritoAchados = Path.of(gabaritoAchados);
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +99,7 @@ public class ServicoComparativo {
         List<String> medidas = new ArrayList<>();
         List<String> semIa = new ArrayList<>();
         int noGabarito = 0, outroFora = 0, aceitos = 0, recusados = 0;
-        int[] b = new int[3], y = new int[3];
+        int[] b = new int[4], y = new int[4];
         for (Map.Entry<String, List<RotuloAfirmacao>> e : porPagina.entrySet()) {
             Optional<Auditoria> ultima = auditorias.findFirstByProdutoIdOrderByVersaoDesc(e.getKey())
                     .filter(a -> a.getStatus() == StatusAuditoria.CONCLUIDA);
@@ -126,7 +131,20 @@ public class ServicoComparativo {
         return new Comparativo.Real(divisao, incluirOutro, medidas, semIa, noGabarito, outroFora,
                 medidas.isEmpty() ? null : Metricas.de(b[0], b[1], b[2]),
                 medidas.isEmpty() ? null : Metricas.de(y[0], y[1], y[2]),
-                aceitos, recusados, "não medido: data/real/rotulos/achados_esperados.csv ainda não existe");
+                aceitos, recusados, b[3], y[3], situacaoB1B2());
+    }
+
+    /**
+     * B1/B2 (achados em páginas reais) NÃO é calculado por este protótipo: o texto diz isso e quantos rótulos existem,
+     * em vez de afirmar que o arquivo não existe. Só conta registros; não lê nem mostra o conteúdo dos rótulos.
+     */
+    private String situacaoB1B2() {
+        int registros = LeitorGabarito.contarRegistros(gabaritoAchados);
+        if (registros < 0) {
+            return "não medido: " + gabaritoAchados.getFileName() + " não encontrado";
+        }
+        return "não medido: o protótipo não compara achados de páginas reais (" + gabaritoAchados.getFileName()
+                + " tem " + registros + (registros == 1 ? " registro" : " registros") + ")";
     }
 
     private Comparativo.Simulado simulado(List<String> avisos) {
@@ -179,6 +197,7 @@ public class ServicoComparativo {
         total[0] += c.vp();
         total[1] += c.fp();
         total[2] += c.fn();
+        total[3] += c.agrupadas();
     }
 
     private static ItemEntrega paraItem(ItemDoEvento i) {

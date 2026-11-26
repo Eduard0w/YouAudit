@@ -16,10 +16,14 @@ public record Comparativo(Real real, Simulado simulado, List<String> avisos) {
      *
      * @param trechosAceitos   afirmações que passaram na conferência de trecho literal (páginas medidas)
      * @param trechosRecusados respostas da IA recusadas pelo código (qualquer motivo) nas mesmas páginas
+     * @param agrupadasBaseline afirmações do baseline que caíram dentro de um item do gabarito já acertado (não entram
+     *                          em acerto nem em falso positivo; ver {@link ComparadorAfirmacoes})
+     * @param agrupadasYouaudit o mesmo, para o YouAudit
      */
     public record Real(String divisao, boolean incluiOutro, List<String> paginasMedidas, List<String> paginasSemSaidaDaIa,
                        int afirmacoesNoGabarito, int outroForaDaConta, Metricas baseline, Metricas youaudit,
-                       int trechosAceitos, int trechosRecusados, String achadosB1B2) {
+                       int trechosAceitos, int trechosRecusados, int agrupadasBaseline, int agrupadasYouaudit,
+                       String achadosB1B2) {
     }
 
     /**
