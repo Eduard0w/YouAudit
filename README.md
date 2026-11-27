@@ -66,13 +66,27 @@ modelo, então rodar de novo a mesma página não chama a IA outra vez.
 
 ## Roteiro da demonstração
 
-1. **Iniciar simulador**: os 18 produtos fictícios chegam um a um e a fila vai se enchendo sozinha (atualiza a cada 3 s).
-2. Abrir um produto: pontuação, faixa (BAIXA, MEDIA, ALTA), alertas com o **trecho destacado** e a regra de origem.
-3. Ver o **relatório de correções** para o produtor (envio simulado).
-4. Revisar os alertas (confirmar/descartar) e registrar a decisão (liberar, pedir ajuste, escalar), sempre com motivo.
-5. No `sim-001`, **Reenviar versão corrigida (simulado)**: a versão 2 é auditada de novo e a pontuação cai.
-6. **Comparativo baseline × YouAudit** (botão "Calcular"): o mesmo conjunto passa por um verificador convencional (palavras-chave e
+A tela tem três abas: **Fila de revisão**, **Comparativo** e **Demonstração**. Cada produto mostra a etiqueta
+Real ou Simulado.
+
+1. Na aba **Demonstração**, **Iniciar simulador**: os 18 produtos fictícios chegam um a um e a fila vai se enchendo
+   sozinha (atualiza a cada 3 s; 10 produtos por página, com busca e filtros por risco e origem).
+2. Abrir um produto: pontuação, faixa (BAIXA, MEDIA, ALTA) e a conta. Na aba **Alertas**, cada alerta com o trecho e a
+   regra de origem; na aba **Página × entrega**, os trechos destacados no texto.
+3. Na aba **Relatório ao produtor**, as correções sugeridas (envio simulado).
+4. Revisar os alertas (confirmar/descartar) e registrar a decisão na barra do fim da tela (liberar, pedir ajuste,
+   escalar), sempre com motivo.
+5. No `sim-001` ou no `sim-017`, **Reenviar versão corrigida** (simulado): a nova versão é auditada de novo. A aba
+   **O que mudou** mostra cada alerta como resolvido, continua (idêntico depois de um pedido de ajuste) ou novo. O
+   reenvio do `sim-017` foi montado como uma correção parcial: um termo proibido fica igual, a quantidade e o custo são
+   corrigidos e entra uma promessa nova. O resultado exato depende da leitura da IA.
+6. Ao **Liberar**, o sistema guarda as promessas e os alertas daquela versão, com um hash. A aba **Registro aprovado**
+   mostra se o registro continua íntegro e se a página mudou desde a aprovação. O hash mostra alteração acidental; não é
+   garantia de segurança.
+7. Na aba **Comparativo** (botão "Calcular"): o mesmo conjunto passa por um verificador convencional (palavras-chave e
    números, sem IA) e pelo YouAudit, com REAL e SIMULADO separados.
+
+Dá para abrir um produto direto pelo endereço, por exemplo `http://localhost:8080/#produto=sim-017&aba=mudancas`.
 
 ## Como o comparativo conta acertos
 
