@@ -1,0 +1,6 @@
+# Proxy na frente do YouAudit: só recebe os pedidos e repassa para a aplicação, sem bloquear nenhuma rota.
+# Com DOMINIO (ex.: youaudit.duckdns.org), o Caddy gera o certificado HTTPS sozinho (Let's Encrypt).
+# Sem DOMINIO (":80"), atende HTTP pelo IP.
+{$DOMINIO} {
+	reverse_proxy app:8080
+}

@@ -1,0 +1,45 @@
+# YouAudit no servidor: o mesmo sistema da máquina local, sem tirar nem pôr funcionalidade.
+# Uso (na pasta do projeto, no servidor):
+#   cp ambiente.exemplo .env      # e preencha GROQ_API_KEY e DOMINIO (o .env nunca vai para o Git)
+#   docker compose up -d --build
+# Logs: docker compose logs -f app      Parar: docker compose down (os dados ficam no volume)
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Nomes: a propriedade do Spring em maiúsculas, "." vira "_" e os hífens SOMEM
+      # (ex.: coleta.diretorio-snapshots -> COLETA_DIRETORIOSNAPSHOTS). Com "_" no lugar do hífen, o Spring ignora.
+      # A chave vem do arquivo .env (mesma pasta). Nunca escreva a chave aqui.
+      GROQ_API_KEY: ${GROQ_API_KEY:?defina GROQ_API_KEY no arquivo .env}
+      # Banco em arquivo no volume: o cache da IA sobrevive a reinícios, a demo não depende da API no ar.
+      SPRING_DATASOURCE_URL: jdbc:h2:file:/dados/db/youaudit
+      # Console do H2 DESLIGADO: no ar, ele abriria o banco para qualquer pessoa (decisão do Eduardo, 27/11).
+      SPRING_H2_CONSOLE_ENABLED: "false"
+      COLETA_DIRETORIOSNAPSHOTS: /dados/snapshots
+    volumes:
+      - youaudit-dados:/dados
+    # Sem "ports": a aplicação só é alcançada pelo proxy abaixo.
+    expose:
+      - "8080"
+    mem_limit: ${LIMITE_MEMORIA:-768m}
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Vazio: ":80" (HTTP pelo IP). Com o nome do DuckDNS, o Caddy gera HTTPS sozinho.
+      DOMINIO: ${DOMINIO:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+
+volumes:
+  youaudit-dados:
+  caddy-dados:

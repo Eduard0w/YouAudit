@@ -1,0 +1,17 @@
+# O que NUNCA entra na construção da imagem.
+# Dados reais (regra 7 do projeto): páginas, banco, rótulos, urls.txt.
+data/real/
+# Segredos
+.env
+.env*
+*.env
+# Build local, Git, IDE e documentação privada
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+.claude/
+.mcp.json
+youaudit-docs/
+CLAUDE.md
