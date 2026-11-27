@@ -3626,6 +3626,232 @@
           ]
         }
       }
+    },
+    {
+      "tipo": "PRODUTO_REENVIADO",
+      "entrada": "EVENTO",
+      "produto": {
+        "id": "sim-017",
+        "nome": "Dropshipping Rápido",
+        "categoria": "curso",
+        "preco": 397.0,
+        "origem": "SIMULADO",
+        "pagina_texto": "Dropshipping Rápido\nDinheiro fácil com loja sem estoque\nFature R$ 5 mil já no primeiro mês\n6 módulos completos\nA aula 5 usa a plataforma de loja W, com assinatura mensal que não está inclusa no preço\nPreço: R$ 397 em até 12 parcelas\nAcesso por 12 meses na plataforma\nGarantia de 7 dias: se não gostar, devolvemos seu dinheiro\nSuporte por e-mail para dúvidas",
+        "conteudo": {
+          "itens": [
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 1",
+              "descricao": null
+            },
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 2",
+              "descricao": null
+            },
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 3",
+              "descricao": null
+            },
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 4",
+              "descricao": null
+            },
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 5",
+              "descricao": null
+            },
+            {
+              "tipo": "MODULO",
+              "titulo": "Módulo 6",
+              "descricao": null
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 1",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 2",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 3",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 4",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 5",
+              "descricao": "Requer assinatura mensal da plataforma de loja W",
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 6",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 7",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 8",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 9",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 10",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 11",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 12",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 13",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 14",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 15",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 16",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 17",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 18",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 19",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 20",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 21",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 22",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 23",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 24",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 25",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 26",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 27",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 28",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 29",
+              "descricao": null,
+              "duracao_min": 15
+            },
+            {
+              "tipo": "AULA",
+              "titulo": "Aula 30",
+              "descricao": null,
+              "duracao_min": 15
+            }
+          ]
+        }
+      }
     }
   ]
 }

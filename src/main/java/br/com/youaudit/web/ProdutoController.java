@@ -2,6 +2,7 @@ package br.com.youaudit.web;
 
 import br.com.youaudit.coleta.StatusProduto;
 import br.com.youaudit.evento.ServicoReprocessamento;
+import br.com.youaudit.revisao.ComparacaoVersoes;
 import br.com.youaudit.revisao.DetalheProduto;
 import br.com.youaudit.revisao.PedidoDecisao;
 import br.com.youaudit.revisao.PedidoRevisao;
@@ -43,6 +44,12 @@ public class ProdutoController {
     @GetMapping("/api/produtos/{id}/auditorias")
     public List<VersaoAuditoria> versoes(@PathVariable String id) {
         return consulta.versoes(id);
+    }
+
+    /** O que mudou nos alertas da versão anterior para a atual. 404 se não há duas versões concluídas. */
+    @GetMapping("/api/produtos/{id}/comparacao")
+    public ComparacaoVersoes comparacao(@PathVariable String id) {
+        return consulta.comparacao(id);
     }
 
     @GetMapping("/api/produtos/{id}/relatorio")

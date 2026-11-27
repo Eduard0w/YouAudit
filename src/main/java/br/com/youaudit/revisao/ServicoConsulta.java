@@ -6,12 +6,14 @@ import br.com.youaudit.coleta.ProdutoRepository;
 import br.com.youaudit.entrega.DescarteCruzamentoRepository;
 import br.com.youaudit.evento.Auditoria;
 import br.com.youaudit.evento.AuditoriaRepository;
+import br.com.youaudit.evento.StatusAuditoria;
 import br.com.youaudit.extracao.AfirmacaoDescartadaRepository;
 import br.com.youaudit.extracao.AfirmacaoRepository;
 import br.com.youaudit.pontuacao.Faixa;
 import br.com.youaudit.redacao.NotificacaoProdutorRepository;
 import br.com.youaudit.regras.Achado;
 import br.com.youaudit.regras.AchadoRepository;
+import br.com.youaudit.regras.EstadoAchado;
 import br.com.youaudit.regras.Regra;
 import br.com.youaudit.regras.RegraRepository;
 import br.com.youaudit.regras.Severidade;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +41,15 @@ public class ServicoConsulta {
     private final RegistroDecisaoRepository decisoes;
     private final RegraRepository regras;
     private final NotificacaoProdutorRepository notificacoes;
+    private final RevisaoRepository revisoes;
+    private final ComparadorVersoes comparador;
 
     public ServicoConsulta(ProdutoRepository produtos, AuditoriaRepository auditorias, AchadoRepository achados,
                            AfirmacaoRepository afirmacoes, AfirmacaoDescartadaRepository afirmacoesDescartadas,
                            DescarteCruzamentoRepository descartesCruzamento, ConteudoItemRepository conteudos,
                            RegistroDecisaoRepository decisoes, RegraRepository regras,
-                           NotificacaoProdutorRepository notificacoes) {
+                           NotificacaoProdutorRepository notificacoes, RevisaoRepository revisoes,
+                           ComparadorVersoes comparador) {
         this.produtos = produtos;
         this.auditorias = auditorias;
         this.achados = achados;
@@ -54,6 +60,8 @@ public class ServicoConsulta {
         this.decisoes = decisoes;
         this.regras = regras;
         this.notificacoes = notificacoes;
+        this.revisoes = revisoes;
+        this.comparador = comparador;
     }
 
     @Transactional(readOnly = true)
@@ -113,6 +121,68 @@ public class ServicoConsulta {
         return notificacoes.findByAuditoriaId(a.getId()).stream().findFirst()
                 .map(n -> new RelatorioProdutor(produtoId, a.getVersao(), n.getCanal(), n.getEnviadaEm(), n.getConteudo()))
                 .orElseThrow(() -> new NaoEncontradoException("ainda não há relatório para a versão " + a.getVersao()));
+    }
+
+    /**
+     * Compara a versão mais recente com a anterior. As duas precisam estar CONCLUIDAS: comparar com uma auditoria que
+     * falhou ou ainda roda daria "tudo resolvido" ou "tudo novo" sem ser verdade.
+     */
+    @Transactional(readOnly = true)
+    public ComparacaoVersoes comparacao(String produtoId) {
+        Produto p = produto(produtoId);
+        Auditoria atual = auditorias.findFirstByProdutoIdOrderByVersaoDesc(produtoId)
+                .orElseThrow(() -> new NaoEncontradoException("o produto não tem auditoria"));
+        Auditoria anterior = auditorias.findByProdutoIdOrderByVersaoAsc(produtoId).stream()
+                .filter(a -> a.getVersao() == atual.getVersao() - 1).findFirst()
+                .orElseThrow(() -> new NaoEncontradoException("não há versão anterior para comparar"));
+        if (atual.getStatus() != StatusAuditoria.CONCLUIDA || anterior.getStatus() != StatusAuditoria.CONCLUIDA) {
+            throw new NaoEncontradoException("as duas versões precisam estar concluídas para comparar");
+        }
+
+        // A decisão é guardada por produto, não por versão: vale a última registrada entre as duas versões.
+        Optional<RegistroDecisao> decisao = decisoes.findByProdutoIdOrderByDataAsc(produtoId).stream()
+                .filter(d -> !d.getData().isBefore(anterior.getCriadaEm()) && d.getData().isBefore(atual.getCriadaEm()))
+                .reduce((primeira, segunda) -> segunda);
+        boolean pedidoAjuste = decisao.map(d -> d.getDecisao() == DecisaoProduto.PEDIR_AJUSTE).orElse(false);
+
+        List<ComparadorVersoes.Item> itens = comparador.comparar(alertas(anterior), alertas(atual), pedidoAjuste);
+        return new ComparacaoVersoes(p.getId(), p.getOrigem(),
+                anterior.getVersao(), anterior.getPontuacao(), anterior.getFaixa(),
+                atual.getVersao(), atual.getPontuacao(), atual.getFaixa(),
+                decisao.map(d -> new DetalheProduto.DecisaoVista(d.getDecisao(), d.getMotivo(), d.getData())).orElse(null),
+                pedidoAjuste, itens, contar(itens));
+    }
+
+    private List<ComparadorVersoes.Alerta> alertas(Auditoria a) {
+        return achados.findByAuditoriaId(a.getId()).stream()
+                .sorted(Comparator.comparing(Achado::getId))
+                .map(x -> new ComparadorVersoes.Alerta(x.getId(), x.getRegraCodigo(), x.getEvidenciaPagina(),
+                        x.getEvidenciaEntrega(), x.getDetalhe(), x.getEstado(), ultimaNota(x.getId())))
+                .toList();
+    }
+
+    private String ultimaNota(Long achadoId) {
+        return revisoes.findByAchadoId(achadoId).stream()
+                .max(Comparator.comparing(Revisao::getData))
+                .map(Revisao::getNota).orElse(null);
+    }
+
+    static ComparacaoVersoes.Contagem contar(List<ComparadorVersoes.Item> itens) {
+        int resolvidos = 0, continuam = 0, iguais = 0, novos = 0, anterior = 0, atual = 0, semJulgamento = 0;
+        for (ComparadorVersoes.Item i : itens) {
+            if (i.anterior() != null) anterior++;
+            if (i.atual() != null) atual++;
+            switch (i.situacao()) {
+                case RESOLVIDO -> resolvidos++;
+                case CONTINUA -> continuam++;
+                case IGUAL_ANTERIOR -> iguais++;
+                case NOVO -> novos++;
+            }
+            boolean nuncaJulgado = i.situacao() == SituacaoAlerta.NOVO
+                    || (i.atual() != null && i.anterior().estado() == EstadoAchado.PENDENTE);
+            if (nuncaJulgado) semJulgamento++;
+        }
+        return new ComparacaoVersoes.Contagem(resolvidos, continuam, iguais, novos, anterior, atual, semJulgamento);
     }
 
     private Produto produto(String id) {

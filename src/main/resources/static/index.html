@@ -44,6 +44,13 @@
     .estado-CONFIRMADO { color: var(--alta); border-color: #e3a3a0; }
     .estado-DESCARTADO { color: var(--suave); border-color: var(--borda); }
     .estado-PENDENTE { color: var(--azul); border-color: #a9c2ea; }
+    .situacao-RESOLVIDO { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
+    .situacao-CONTINUA { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
+    .situacao-IGUAL_ANTERIOR { color: var(--suave); border-color: var(--borda); background: var(--fundo); }
+    .situacao-NOVO { color: var(--azul); border-color: #a9c2ea; background: #eef3fc; }
+    .mudanca { border: 1px solid var(--borda); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    .mudanca .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+    @media (max-width: 640px) { .mudanca .lado { grid-template-columns: 1fr; } }
     .motivo { color: var(--suave); font-size: 13px; }
     .vazio { color: var(--suave); padding: 14px 8px; }
     #detalhe { border: 1px solid var(--borda); border-radius: 8px; padding: 4px 16px 16px; margin-top: 12px; }
@@ -129,6 +136,9 @@
   // assim nenhum texto de página consegue virar HTML ou script (regra 3: texto de página é dado).
 
   const NOMES_DECISAO = { LIBERAR: 'Liberar', PEDIR_AJUSTE: 'Pedir ajuste', ESCALAR: 'Escalar' };
+  // Produtos que têm versão corrigida na lista "reenvios" de data/simulado/produtos.json.
+  const COM_REENVIO = new Set(['sim-001', 'sim-017']);
+  const NOMES_SITUACAO = { RESOLVIDO: 'resolvido', CONTINUA: 'continua sem mudança', IGUAL_ANTERIOR: 'igual à versão anterior', NOVO: 'novo' };
   let selecionado = null;
 
   function el(tag, texto, classe) {
@@ -192,11 +202,70 @@
   }
 
   // ---------- Detalhe ----------
+  // O que mudou da versão anterior para a atual. Só mostra: não muda o estado de nenhum alerta.
+  function secaoComparacao(c) {
+    const s = el('div');
+    s.appendChild(el('h3', 'O que mudou da versão ' + c.versaoAnterior + ' para a ' + c.versaoAtual));
+    const pont = v => v == null ? '—' : String(v);
+    s.appendChild(el('p', 'Pontuação ' + pont(c.pontuacaoAnterior) + ' → ' + pont(c.pontuacaoAtual) + ' · alertas ' +
+      c.contagem.alertasAnterior + ' → ' + c.contagem.alertasAtual + ' · ' + c.contagem.resolvidos + ' resolvidos · ' +
+      (c.contagem.continuam + c.contagem.iguaisAnterior) + ' voltaram idênticos · ' + c.contagem.novos + ' novos · ' +
+      c.contagem.semJulgamentoAnterior + ' sem julgamento anterior (' + c.origem + ').'));
+    s.appendChild(el('p', c.decisaoEntreVersoes
+      ? 'Decisão sobre a versão ' + c.versaoAnterior + ': ' + NOMES_DECISAO[c.decisaoEntreVersoes.decisao] + ' — ' + c.decisaoEntreVersoes.motivo
+      : 'Nenhuma decisão foi registrada sobre a versão ' + c.versaoAnterior + ' antes do reenvio.', 'motivo'));
+
+    const rotulo = el('label');
+    const filtro = el('input');
+    filtro.type = 'checkbox';
+    rotulo.append(filtro, document.createTextNode(' mostrar só o que ninguém julgou ainda'));
+    s.appendChild(rotulo);
+
+    const lista = el('div');
+    const nuncaJulgado = i => i.situacao === 'NOVO' || (i.atual && i.anterior && i.anterior.estado === 'PENDENTE');
+    const desenhar = () => {
+      lista.replaceChildren();
+      const itens = c.itens.filter(i => !filtro.checked || nuncaJulgado(i));
+      if (itens.length === 0) lista.appendChild(el('p', 'Nada a mostrar.', 'motivo'));
+      for (const i of itens) lista.appendChild(cartaoMudanca(i, c));
+    };
+    filtro.addEventListener('change', desenhar);
+    desenhar();
+    s.appendChild(lista);
+    s.appendChild(el('p', '"Mesmo alerta" = mesmo tipo e mesmos trechos, caractere por caractere. Frase reescrita que ainda é sinalizada aparece como novo. ' +
+      'A decisão anterior é só mostrada: os alertas da versão nova começam pendentes.', 'motivo'));
+    return s;
+  }
+
+  function cartaoMudanca(i, c) {
+    const caixa = el('div', null, 'mudanca');
+    const ref = i.atual || i.anterior;
+    const t = el('div');
+    t.append(etiqueta(i.situacao, 'situacao'), document.createTextNode(' '), el('b', ref.tipo));
+    t.firstChild.textContent = NOMES_SITUACAO[i.situacao];
+    caixa.appendChild(t);
+    const lado = el('div', null, 'lado');
+    const coluna = (titulo, a) => {
+      const col = el('div');
+      col.appendChild(el('div', titulo, 'motivo'));
+      if (!a) { col.appendChild(el('span', '—', 'motivo')); return col; }
+      const evid = [a.evidenciaPagina, a.evidenciaEntrega].filter(Boolean);
+      col.appendChild(el('span', evid.length ? evid.join(' · ') : (a.detalhe || '—'), 'trecho'));
+      if (a === i.anterior && a.estado !== 'PENDENTE') {
+        col.appendChild(el('div', 'Julgado na v' + c.versaoAnterior + ': ' + a.estado + (a.nota ? ' — ' + a.nota : ''), 'motivo'));
+      }
+      return col;
+    };
+    lado.append(coluna('Versão ' + c.versaoAnterior, i.anterior), coluna('Versão ' + c.versaoAtual, i.atual));
+    caixa.appendChild(lado);
+    return caixa;
+  }
+
   async function abrirDetalhe(id) {
     selecionado = id;
     const caixa = document.getElementById('detalhe');
     caixa.hidden = false;
-    let d, versoes, relatorio = null;
+    let d, versoes, relatorio = null, comparacao = null;
     try {
       const r = await fetch('/api/produtos/' + encodeURIComponent(id));
       if (!r.ok) { caixa.replaceChildren(el('p', 'Não consegui abrir ' + id + ': ' + await mensagemDeErro(r), 'erro')); return; }
@@ -204,15 +273,17 @@
       versoes = await (await fetch('/api/produtos/' + encodeURIComponent(id) + '/auditorias')).json();
       const rr = await fetch('/api/produtos/' + encodeURIComponent(id) + '/relatorio');
       if (rr.ok) relatorio = await rr.json();
+      const rc = await fetch('/api/produtos/' + encodeURIComponent(id) + '/comparacao');
+      if (rc.ok) comparacao = await rc.json();   // 404 = não há duas versões concluídas: a seção não aparece
     } catch (e) {
       caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro'));
       return;
     }
-    desenharDetalhe(caixa, d, versoes, relatorio);
+    desenharDetalhe(caixa, d, versoes, relatorio, comparacao);
     atualizarFila();
   }
 
-  function desenharDetalhe(caixa, d, versoes, relatorio) {
+  function desenharDetalhe(caixa, d, versoes, relatorio, comparacao) {
     caixa.replaceChildren();
     const a = d.auditoria;
     const cab = el('div', null, 'cabecalho');
@@ -231,7 +302,7 @@
       acoes.appendChild(b);
       if (d.origem === 'REAL') acoes.appendChild(el('span', 'Páginas reais só passam pela IA por este botão (as RESERVADO só depois do congelamento).', 'motivo'));
     }
-    if (d.origem === 'SIMULADO' && d.id === 'sim-001') {
+    if (d.origem === 'SIMULADO' && COM_REENVIO.has(d.id)) {
       const b = el('button', 'Reenviar versão corrigida (simulado)', 'secundario');
       b.addEventListener('click', () => acao(b, '/api/simulador/reenviar/' + encodeURIComponent(d.id), null, 'Versão corrigida enviada.'));
       acoes.appendChild(b);
@@ -256,6 +327,8 @@
       caixa.appendChild(el('p', d.afirmacoes.length + ' afirmações extraídas pela IA e conferidas · ' + d.afirmacoesDescartadas +
         ' recusadas pelo código na extração · ' + d.descartesCruzamento + ' recusadas no cruzamento.', 'motivo'));
     }
+
+    if (comparacao) caixa.appendChild(secaoComparacao(comparacao));
 
     // Achados
     caixa.appendChild(el('h3', 'Achados (' + d.achados.length + ')'));

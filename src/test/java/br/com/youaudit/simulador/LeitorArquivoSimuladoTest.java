@@ -23,7 +23,7 @@ class LeitorArquivoSimuladoTest {
             assertThat(p.evento().produto().paginaTexto()).isNotBlank();
             assertThat(p.divergenciasPlantadas()).isNotNull();
         });
-        assertThat(a.reenvios()).extracting(r -> r.produto().id()).containsExactly("sim-001");
+        assertThat(a.reenvios()).extracting(r -> r.produto().id()).containsExactly("sim-001", "sim-017");
     }
 
     @Test
