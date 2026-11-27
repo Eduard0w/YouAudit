@@ -6,8 +6,10 @@ import br.com.youaudit.revisao.ComparacaoVersoes;
 import br.com.youaudit.revisao.DetalheProduto;
 import br.com.youaudit.revisao.PedidoDecisao;
 import br.com.youaudit.revisao.PedidoRevisao;
+import br.com.youaudit.revisao.RegistroPromessasVisto;
 import br.com.youaudit.revisao.RelatorioProdutor;
 import br.com.youaudit.revisao.ServicoConsulta;
+import br.com.youaudit.revisao.ServicoRegistroPromessas;
 import br.com.youaudit.revisao.ServicoRevisao;
 import br.com.youaudit.revisao.VersaoAuditoria;
 import br.com.youaudit.regras.EstadoAchado;
@@ -29,11 +31,14 @@ public class ProdutoController {
     private final ServicoConsulta consulta;
     private final ServicoRevisao revisao;
     private final ServicoReprocessamento reprocessamento;
+    private final ServicoRegistroPromessas registros;
 
-    public ProdutoController(ServicoConsulta consulta, ServicoRevisao revisao, ServicoReprocessamento reprocessamento) {
+    public ProdutoController(ServicoConsulta consulta, ServicoRevisao revisao, ServicoReprocessamento reprocessamento,
+                             ServicoRegistroPromessas registros) {
         this.consulta = consulta;
         this.revisao = revisao;
         this.reprocessamento = reprocessamento;
+        this.registros = registros;
     }
 
     @GetMapping("/api/produtos/{id}")
@@ -50,6 +55,12 @@ public class ProdutoController {
     @GetMapping("/api/produtos/{id}/comparacao")
     public ComparacaoVersoes comparacao(@PathVariable String id) {
         return consulta.comparacao(id);
+    }
+
+    /** O que foi prometido em cada versão LIBERADA, congelado na decisão, com os sinais "íntegro" e "página mudou". */
+    @GetMapping("/api/produtos/{id}/registros")
+    public List<RegistroPromessasVisto> registros(@PathVariable String id) {
+        return registros.listar(id);
     }
 
     @GetMapping("/api/produtos/{id}/relatorio")

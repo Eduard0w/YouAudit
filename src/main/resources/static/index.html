@@ -48,6 +48,10 @@
     .situacao-CONTINUA { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
     .situacao-IGUAL_ANTERIOR { color: var(--suave); border-color: var(--borda); background: var(--fundo); }
     .situacao-NOVO { color: var(--azul); border-color: #a9c2ea; background: #eef3fc; }
+    .registro { border: 1px solid var(--borda); border-left: 4px solid var(--azul); border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+    .sinal-ok { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
+    .sinal-alerta { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
+    .sinal-neutro { color: var(--suave); border-color: var(--borda); background: var(--fundo); }
     .mudanca { border: 1px solid var(--borda); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
     .mudanca .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
     @media (max-width: 640px) { .mudanca .lado { grid-template-columns: 1fr; } }
@@ -261,11 +265,61 @@
     return caixa;
   }
 
+  // O que foi prometido em cada versão liberada, congelado no LIBERAR. Os dois sinais são recalculados pelo código.
+  function secaoRegistros(registros) {
+    const s = el('div');
+    s.appendChild(el('h3', 'Registro das promessas aprovadas'));
+    if (!registros.length) {
+      s.appendChild(el('p', 'Nenhuma versão liberada ainda. O registro é criado quando uma pessoa decide Liberar.', 'motivo'));
+      return s;
+    }
+    const sinal = (texto, tipo) => el('span', texto, 'etiqueta sinal-' + tipo);
+    for (const r of registros) {
+      const c = r.conteudo;
+      const caixa = el('div', null, 'registro');
+      caixa.appendChild(el('div', 'Versão ' + r.versao + ' liberada em ' + dataHora(r.data) + ' — ' + r.motivo));
+      const sinais = el('div');
+      sinais.append(
+        r.integro ? sinal('conteúdo íntegro (hash confere)', 'ok') : sinal('conteúdo alterado depois de gravado', 'alerta'),
+        document.createTextNode(' '),
+        r.paginaMudouDesdeAprovacao === true ? sinal('a página mudou desde a aprovação', 'alerta')
+          : r.paginaMudouDesdeAprovacao === false ? sinal('página igual à aprovada', 'ok')
+          : sinal('não dá para saber se a página mudou', 'neutro'));
+      caixa.appendChild(sinais);
+      if (c && c.aviso) caixa.appendChild(el('p', c.aviso, 'erro'));
+      if (c) {
+        caixa.appendChild(el('div', c.promessas.length + ' promessas com trecho literal conferido · ' + c.alertas.length +
+          ' alertas, com o julgamento da pessoa no momento da aprovação · pontuação ' + (c.pontuacao == null ? '—' : c.pontuacao) +
+          ' (' + c.origem + ')', 'motivo'));
+        const ul = el('ul');
+        for (const pr of c.promessas) {
+          const li = el('li');
+          li.append(el('b', pr.tipo + ' '), el('span', pr.trecho, 'trecho'));
+          ul.appendChild(li);
+        }
+        for (const al of c.alertas) {
+          const li = el('li');
+          li.append(etiqueta(al.estado, 'estado'), document.createTextNode(' ' + al.tipo + ' '),
+            el('span', [al.evidenciaPagina, al.evidenciaEntrega].filter(Boolean).join(' · ') || al.detalhe || '—', 'trecho'));
+          if (al.nota) li.appendChild(el('span', ' — ' + al.nota, 'motivo'));
+          ul.appendChild(li);
+        }
+        caixa.appendChild(ul);
+      }
+      caixa.appendChild(el('div', 'hash da página ' + (r.hashPagina ? r.hashPagina.slice(0, 12) + '…' : '—') +
+        ' · hash do registro ' + r.hashConteudo.slice(0, 12) + '…', 'motivo'));
+      s.appendChild(caixa);
+    }
+    s.appendChild(el('p', 'Registro de fatos, não selo nem parecer jurídico. O hash mostra alteração acidental; quem tem acesso ao banco ' +
+      'poderia alterar o conteúdo e recalcular o hash, então não é garantia de segurança.', 'motivo'));
+    return s;
+  }
+
   async function abrirDetalhe(id) {
     selecionado = id;
     const caixa = document.getElementById('detalhe');
     caixa.hidden = false;
-    let d, versoes, relatorio = null, comparacao = null;
+    let d, versoes, relatorio = null, comparacao = null, registros = [];
     try {
       const r = await fetch('/api/produtos/' + encodeURIComponent(id));
       if (!r.ok) { caixa.replaceChildren(el('p', 'Não consegui abrir ' + id + ': ' + await mensagemDeErro(r), 'erro')); return; }
@@ -275,15 +329,17 @@
       if (rr.ok) relatorio = await rr.json();
       const rc = await fetch('/api/produtos/' + encodeURIComponent(id) + '/comparacao');
       if (rc.ok) comparacao = await rc.json();   // 404 = não há duas versões concluídas: a seção não aparece
+      const rg = await fetch('/api/produtos/' + encodeURIComponent(id) + '/registros');
+      if (rg.ok) registros = await rg.json();
     } catch (e) {
       caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro'));
       return;
     }
-    desenharDetalhe(caixa, d, versoes, relatorio, comparacao);
+    desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros);
     atualizarFila();
   }
 
-  function desenharDetalhe(caixa, d, versoes, relatorio, comparacao) {
+  function desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros) {
     caixa.replaceChildren();
     const a = d.auditoria;
     const cab = el('div', null, 'cabecalho');
@@ -373,6 +429,8 @@
       tv.appendChild(tr);
     }
     caixa.appendChild(tv);
+
+    caixa.appendChild(secaoRegistros(registros));
 
     // Relatório
     caixa.appendChild(el('h3', 'Relatório ao produtor (envio simulado)'));

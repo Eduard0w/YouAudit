@@ -28,14 +28,16 @@ public class ServicoRevisao {
     private final ProdutoRepository produtos;
     private final RegistroDecisaoRepository decisoes;
     private final Clock relogio;
+    private final ServicoRegistroPromessas registroPromessas;
 
     public ServicoRevisao(AchadoRepository achados, RevisaoRepository revisoes, ProdutoRepository produtos,
-                          RegistroDecisaoRepository decisoes, Clock relogio) {
+                          RegistroDecisaoRepository decisoes, Clock relogio, ServicoRegistroPromessas registroPromessas) {
         this.achados = achados;
         this.revisoes = revisoes;
         this.produtos = produtos;
         this.decisoes = decisoes;
         this.relogio = relogio;
+        this.registroPromessas = registroPromessas;
     }
 
     @Transactional
@@ -59,7 +61,13 @@ public class ServicoRevisao {
             case ESCALAR -> StatusProduto.ESCALADO;
         };
         produto.setStatus(novo);
-        decisoes.save(new RegistroDecisao(produto, pedido.decisao(), pedido.motivo().strip(), Instant.now(relogio)));
+        Instant agora = Instant.now(relogio);
+        String motivo = pedido.motivo().strip();
+        decisoes.save(new RegistroDecisao(produto, pedido.decisao(), motivo, agora));
+        if (pedido.decisao() == DecisaoProduto.LIBERAR) {
+            // Mesma transação: se o registro falhar, a decisão também não é gravada.
+            registroPromessas.congelar(produto, motivo, agora);
+        }
         return novo;
     }
 }
