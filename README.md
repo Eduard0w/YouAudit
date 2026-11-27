@@ -2,6 +2,14 @@
 
 Protótipo para o Desafio de Inovação do estágio YouShop 2027.
 
+**No ar:** https://youaudit.duckdns.org
+
+O protótipo está publicado numa VM da **Oracle Cloud no plano Always Free** (ARM, Ubuntu), com Docker e o Caddy na
+frente para o HTTPS (certificado Let's Encrypt), no limite de 2 GB de memória. Os arquivos estão neste repositório:
+`Dockerfile`, `docker-compose.yml` e `Caddyfile`. Cada push na `main` passa pelos testes (`mvn test`) no próprio
+servidor antes de ir para o ar. Se algum teste falha, a versão em execução continua a mesma. Se a versão nova não
+responde depois de subir, o servidor volta para a anterior.
+
 O YouAudit reage ao evento **"produto enviado para aprovação"**: lê a página de venda, extrai as promessas, confere essas
 promessas contra regras e contra o que o produto realmente entrega, calcula uma **pontuação de risco** e monta:
 
