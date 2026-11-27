@@ -3,148 +3,297 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YouAudit — protótipo</title>
+  <title>YouAudit</title>
   <style>
-    :root { --borda: #d0d4da; --fundo: #f6f7f9; --texto: #1d232b; --suave: #5b6573; --azul: #1f5fbf;
-            --alta: #a3231f; --media: #9a6200; --baixa: #2b6b3a; }
+    /* Cores da YouShop (passadas pelo Eduardo): marinho, lima e dois tons claros.
+       As cores de risco (vermelho, âmbar, verde) ficam à parte: são sinais que todo mundo reconhece. */
+    :root {
+      --marinho: #163159; --marinho-2: #23457a; --lima: #A2EE13; --areia: #F3F6ED; --creme: #FAFBF7;
+      --texto: #14213a; --suave: #5a6478; --borda: #dde3d3; --branco: #fff;
+      --alta: #b42318; --alta-fundo: #fdeceb; --media: #a15c00; --media-fundo: #fdf3e2; --baixa: #2f7d32; --baixa-fundo: #eaf6ea;
+      --raio: 10px; --sombra: 0 1px 2px rgba(22, 49, 89, .06), 0 4px 14px rgba(22, 49, 89, .06);
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--texto); background: #fff; }
-    main { max-width: 1150px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
-    h2 { font-size: 17px; margin: 28px 0 10px; }
-    h3 { font-size: 15px; margin: 20px 0 8px; }
-    .subtitulo { color: var(--suave); margin: 0 0 16px; }
-    .aviso { background: #fff6db; border: 1px solid #e8c45c; border-radius: 6px; padding: 10px 14px; }
-    .aviso strong { display: block; }
-    form, .painel { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    input[type=url], textarea, select { padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; font: inherit; }
-    input[type=url] { flex: 1 1 420px; }
-    textarea { width: 100%; min-height: 60px; }
-    button { padding: 7px 13px; border: 1px solid var(--azul); background: var(--azul); color: #fff; border-radius: 6px; font: inherit; cursor: pointer; }
-    button.secundario { background: #fff; color: var(--azul); }
-    button.pequeno { padding: 3px 9px; font-size: 13px; }
-    button:disabled { opacity: .6; cursor: progress; }
-    .resultado { margin-top: 8px; color: var(--suave); min-height: 1.5em; }
-    .resultado.erro, .erro { color: var(--alta); }
-    .tabela { overflow-x: auto; }
+    html, body { margin: 0; }
+    body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--texto); background: var(--areia); }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    :focus-visible { outline: 3px solid var(--lima); outline-offset: 2px; }
+
+    /* ---------- Topo ---------- */
+    header.topo { background: var(--marinho); color: #fff; }
+    .topo-linha { max-width: 1320px; margin: 0 auto; padding: 14px 16px 0; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .marca { font-size: 21px; font-weight: 800; letter-spacing: -.3px; display: flex; align-items: center; gap: 8px; }
+    .marca .ponto { width: 12px; height: 12px; border-radius: 50%; background: var(--lima); display: inline-block; }
+    .marca small { font-weight: 500; font-size: 13px; color: #c5d0e3; letter-spacing: 0; }
+    nav.abas-topo { max-width: 1320px; margin: 0 auto; padding: 10px 16px 0; display: flex; gap: 4px; overflow-x: auto; }
+    nav.abas-topo button { background: none; border: 0; color: #c5d0e3; padding: 10px 14px; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    nav.abas-topo button:hover { color: #fff; }
+    nav.abas-topo button[aria-selected=true] { color: #fff; border-bottom-color: var(--lima); }
+
+    main { max-width: 1320px; margin: 0 auto; padding: 20px 16px 40px; }
+    .vista[hidden] { display: none !important; }
+
+    /* ---------- Blocos comuns ---------- */
+    .cartao { background: var(--creme); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); }
+    .botao { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; border: 1px solid var(--marinho); background: var(--marinho); color: #fff; }
+    .botao:hover { background: var(--marinho-2); }
+    .botao.destaque { background: var(--lima); border-color: var(--lima); color: var(--marinho); }
+    .botao.destaque:hover { filter: brightness(.95); }
+    .botao.contorno { background: transparent; color: var(--marinho); }
+    .botao.contorno:hover { background: var(--areia); }
+    .botao.pequeno { padding: 4px 11px; font-size: 13px; }
+    .botao:disabled { opacity: .55; cursor: progress; }
+    .suave { color: var(--suave); }
+    .pequeno-texto { font-size: 13px; }
+    .etiqueta { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 999px; border: 1px solid var(--borda); background: var(--branco); white-space: nowrap; color: var(--suave); }
+    .origem-REAL { color: #8a4b00; border-color: #ecc58f; background: #fdf3e6; }
+    .origem-SIMULADO { color: var(--marinho); border-color: #c4cfe0; background: #eef2f8; }
+    .faixa-ALTA, .sev-ALTA, .estado-CONFIRMADO, .situacao-CONTINUA, .sinal-alerta { color: var(--alta); border-color: #f0b4ae; background: var(--alta-fundo); }
+    .faixa-MEDIA, .sev-MEDIA { color: var(--media); border-color: #ecc98b; background: var(--media-fundo); }
+    .faixa-BAIXA, .sev-BAIXA, .situacao-RESOLVIDO, .sinal-ok { color: var(--baixa); border-color: #a9d5aa; background: var(--baixa-fundo); }
+    .estado-PENDENTE, .situacao-NOVO { color: var(--marinho); border-color: #b9c6dc; background: #eef2f8; }
+    .estado-DESCARTADO, .situacao-IGUAL_ANTERIOR, .sinal-neutro { color: var(--suave); }
+    .trecho { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--areia); padding: 1px 6px; border-radius: 4px; white-space: pre-wrap; }
+    mark { background: #e3fbb4; box-shadow: inset 0 -2px 0 var(--lima); padding: 0 1px; color: inherit; }
+    .barra { border-radius: 8px; padding: 9px 13px; font-size: 14px; }
+    .barra.ok { background: var(--baixa-fundo); color: var(--baixa); border: 1px solid #a9d5aa; }
+    .barra.erro { background: var(--alta-fundo); color: var(--alta); border: 1px solid #f0b4ae; }
+    .barra.info { background: #eef2f8; color: var(--marinho); border: 1px solid #c4cfe0; }
+    details.ajuda { display: inline-block; font-size: 13px; color: var(--suave); }
+    details.ajuda summary { cursor: pointer; list-style: none; display: inline-flex; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--borda); align-items: center; justify-content: center; font-weight: 700; background: var(--branco); }
+    details.ajuda summary::-webkit-details-marker { display: none; }
+    details.ajuda[open] { display: block; margin-top: 6px; }
+    details.ajuda[open] p { margin: 6px 0 0; max-width: 70ch; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--borda); vertical-align: top; }
-    th { font-size: 13px; color: var(--suave); font-weight: 600; background: var(--fundo); }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--suave); font-weight: 700; }
     td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    tbody#fila tr { cursor: pointer; }
-    tbody#fila tr:hover, tbody#fila tr.selecionada { background: #eef4fd; }
-    .etiqueta { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid; white-space: nowrap; }
-    .entrada-EVENTO { color: #5b3ea8; border-color: #b7a6e3; background: #f3effc; }
-    .entrada-LINK { color: #0f6b5c; border-color: #93cfc3; background: #eaf7f4; }
-    .origem-REAL { color: #8a4b00; border-color: #e5b47a; background: #fdf3e6; }
-    .origem-SIMULADO { color: #3d4a5c; border-color: #b8c0cc; background: #eef1f5; }
-    .faixa-ALTA, .sev-ALTA { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
-    .faixa-MEDIA, .sev-MEDIA { color: var(--media); border-color: #e5c27a; background: #fdf6e6; }
-    .faixa-BAIXA, .sev-BAIXA { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
-    .estado-CONFIRMADO { color: var(--alta); border-color: #e3a3a0; }
-    .estado-DESCARTADO { color: var(--suave); border-color: var(--borda); }
-    .estado-PENDENTE { color: var(--azul); border-color: #a9c2ea; }
-    .situacao-RESOLVIDO { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
-    .situacao-CONTINUA { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
-    .situacao-IGUAL_ANTERIOR { color: var(--suave); border-color: var(--borda); background: var(--fundo); }
-    .situacao-NOVO { color: var(--azul); border-color: #a9c2ea; background: #eef3fc; }
-    .registro { border: 1px solid var(--borda); border-left: 4px solid var(--azul); border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
-    .sinal-ok { color: var(--baixa); border-color: #9fcca9; background: #eef8f0; }
-    .sinal-alerta { color: var(--alta); border-color: #e3a3a0; background: #fcefee; }
-    .sinal-neutro { color: var(--suave); border-color: var(--borda); background: var(--fundo); }
-    .mudanca { border: 1px solid var(--borda); border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
-    .mudanca .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
-    @media (max-width: 640px) { .mudanca .lado { grid-template-columns: 1fr; } }
-    .motivo { color: var(--suave); font-size: 13px; }
-    .vazio { color: var(--suave); padding: 14px 8px; }
-    #detalhe { border: 1px solid var(--borda); border-radius: 8px; padding: 4px 16px 16px; margin-top: 12px; }
-    .cabecalho { display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline; }
-    .pontos { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .achado { border: 1px solid var(--borda); border-left-width: 4px; border-radius: 6px; padding: 10px 12px; margin: 8px 0; }
-    .achado.sev-ALTA { border-left-color: var(--alta); background: #fff; }
-    .achado.sev-MEDIA { border-left-color: var(--media); background: #fff; }
-    .achado.sev-BAIXA { border-left-color: var(--baixa); background: #fff; }
-    .achado .titulo { font-weight: 600; }
-    .trecho { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--fundo); padding: 2px 6px; border-radius: 4px; white-space: pre-wrap; }
-    .pagina { white-space: pre-wrap; background: var(--fundo); border: 1px solid var(--borda); border-radius: 6px; padding: 12px; max-height: 420px; overflow: auto; font-size: 14px; }
-    mark { background: #ffe58a; padding: 0 1px; }
-    pre.relatorio { white-space: pre-wrap; background: var(--fundo); border: 1px solid var(--borda); border-radius: 6px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
-    .colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
-    .sugestao-liberar { background: #eef8f0; border: 1px solid #9fcca9; border-radius: 6px; padding: 8px 12px; }
+    .rolagem-x { overflow-x: auto; }
+
+    /* ---------- Fila + detalhe ---------- */
+    .area-revisao { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+    .area-revisao > *, .duas-colunas > *, .mudanca .lado > * { min-width: 0; }
+    .fila { display: flex; flex-direction: column; position: sticky; top: 12px; max-height: calc(100vh - 24px); }
+    .fila-topo { padding: 14px 14px 10px; border-bottom: 1px solid var(--borda); display: grid; gap: 10px; }
+    .fila-topo h2 { font-size: 16px; display: flex; align-items: baseline; gap: 8px; }
+    .busca { width: 100%; padding: 8px 11px; border: 1px solid var(--borda); border-radius: 8px; background: var(--branco); }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { border: 1px solid var(--borda); background: var(--branco); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--suave); font-weight: 600; }
+    .chip[aria-pressed=true] { background: var(--marinho); border-color: var(--marinho); color: #fff; }
+    .fila-lista { list-style: none; margin: 0; padding: 6px; overflow-y: auto; flex: 1; min-height: 120px; }
+    .item { width: 100%; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: none; border: 1px solid transparent; border-radius: 8px; padding: 8px; cursor: pointer; }
+    .item:hover { background: var(--areia); }
+    .item.selecionado { background: #eef2f8; border-color: #c4cfe0; box-shadow: inset 3px 0 0 var(--lima); }
+    .item-texto { min-width: 0; }
+    .item-texto b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+    .item-texto small { display: block; color: var(--suave); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nota { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-variant-numeric: tabular-nums; border: 2px solid var(--borda); background: var(--branco); color: var(--suave); font-size: 14px; }
+    .nota.faixa-ALTA { border-color: var(--alta); }
+    .nota.faixa-MEDIA { border-color: var(--media); }
+    .nota.faixa-BAIXA { border-color: var(--baixa); }
+    .nota.falhou { border-color: var(--alta); color: var(--alta); border-style: dashed; }
+    .nota.analisando { border-style: dashed; border-color: var(--marinho); color: var(--marinho); animation: pulsar 1.4s ease-in-out infinite; }
+    @keyframes pulsar { 50% { opacity: .45; } }
+    @media (prefers-reduced-motion: reduce) { .nota.analisando { animation: none; } }
+    .paginacao { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--borda); font-size: 13px; color: var(--suave); }
+    .paginacao .botoes { display: flex; gap: 4px; }
+    .paginacao button { min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--borda); background: var(--branco); cursor: pointer; font-weight: 600; }
+    .paginacao button[aria-current=page] { background: var(--marinho); color: #fff; border-color: var(--marinho); }
+    .paginacao button:disabled { opacity: .4; cursor: default; }
+    .vazio { padding: 28px 18px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+    .vazio h3 { font-size: 17px; }
+
+    #detalhe { min-height: 420px; display: flex; flex-direction: column; }
+    .detalhe-topo { padding: 18px 20px 14px; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; border-bottom: 1px solid var(--borda); }
+    .detalhe-topo h2 { font-size: 20px; }
+    .detalhe-topo .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
+    .detalhe-topo .acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .resumo { padding: 16px 20px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .anel { width: 84px; height: 84px; border-radius: 50%; border: 6px solid var(--borda); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--branco); flex: none; }
+    .anel b { font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .anel span { font-size: 10px; color: var(--suave); text-transform: uppercase; letter-spacing: .5px; }
+    .anel.faixa-ALTA { border-color: var(--alta); background: var(--branco); }
+    .anel.faixa-MEDIA { border-color: var(--media); background: var(--branco); }
+    .anel.faixa-BAIXA { border-color: var(--baixa); background: var(--branco); }
+    .resumo-texto { display: grid; gap: 4px; flex: 1; min-width: 0; }
+    .resumo-texto .risco { font-size: 18px; font-weight: 700; }
+    .avisos-detalhe { padding: 0 20px; display: grid; gap: 8px; }
+    .abas-detalhe { display: flex; gap: 2px; padding: 14px 20px 0; border-bottom: 1px solid var(--borda); overflow-x: auto; }
+    .abas-detalhe button { background: none; border: 0; padding: 9px 13px; cursor: pointer; font-weight: 600; color: var(--suave); border-bottom: 3px solid transparent; white-space: nowrap; }
+    .abas-detalhe button[aria-selected=true] { color: var(--marinho); border-bottom-color: var(--lima); }
+    .abas-detalhe .conta-aba { font-size: 11px; background: var(--areia); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+    .painel-aba { padding: 16px 20px 20px; flex: 1; }
+    .painel-aba h3 { font-size: 15px; margin: 4px 0 10px; }
+
+    .achado { background: var(--branco); border: 1px solid var(--borda); border-left: 4px solid var(--borda); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: grid; gap: 6px; }
+    .achado.nivel-ALTA { border-left-color: var(--alta); }
+    .achado.nivel-MEDIA { border-left-color: var(--media); }
+    .achado.nivel-BAIXA { border-left-color: var(--baixa); }
+    .achado .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .achado .titulo { font-weight: 700; }
+    .achado .sugestao { background: var(--areia); border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+    .achado .sugestao b { color: var(--marinho); }
+    .achado .botoes { display: flex; gap: 6px; }
+    .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .pagina { white-space: pre-wrap; background: var(--branco); border: 1px solid var(--borda); border-radius: 8px; padding: 14px; max-height: 460px; overflow: auto; font-size: 14px; }
+    .entrega { list-style: none; margin: 0; padding: 0; max-height: 460px; overflow: auto; border: 1px solid var(--borda); border-radius: 8px; background: var(--branco); }
+    .entrega li { padding: 7px 12px; border-bottom: 1px solid var(--borda); font-size: 14px; }
+    .entrega li:last-child { border-bottom: 0; }
+    .entrega .tipo { font-size: 11px; font-weight: 700; color: var(--suave); letter-spacing: .4px; margin-right: 6px; }
+    pre.relatorio { white-space: pre-wrap; background: var(--branco); border: 1px solid var(--borda); border-radius: 8px; padding: 14px; font: 13px/1.55 ui-monospace, Menlo, Consolas, monospace; margin: 0; }
+    .mudanca, .registro { background: var(--branco); border: 1px solid var(--borda); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+    .registro { border-left: 4px solid var(--lima); }
+    .mudanca .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+    .numeros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .numero { background: var(--branco); border: 1px solid var(--borda); border-radius: 8px; padding: 8px 14px; min-width: 110px; }
+    .numero b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--marinho); }
+    .numero span { font-size: 12px; color: var(--suave); }
+
+    /* Barra de decisão: sempre no fim do detalhe, à vista. */
+    .decisao { position: sticky; bottom: 0; background: var(--creme); border-top: 1px solid var(--borda); padding: 12px 20px; display: grid; gap: 8px; border-radius: 0 0 var(--raio) var(--raio); box-shadow: 0 -6px 14px rgba(22, 49, 89, .05); }
+    .decisao .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .segmentos { display: inline-flex; border: 1px solid var(--marinho); border-radius: 8px; overflow: hidden; }
+    .segmentos button { border: 0; background: var(--branco); color: var(--marinho); padding: 7px 14px; cursor: pointer; font-weight: 600; }
+    .segmentos button + button { border-left: 1px solid var(--marinho); }
+    .segmentos button[aria-pressed=true] { background: var(--marinho); color: #fff; }
+    .decisao textarea { flex: 1 1 260px; min-height: 38px; height: 38px; resize: vertical; padding: 8px 11px; border: 1px solid var(--borda); border-radius: 8px; background: var(--branco); }
+
+    /* ---------- Demonstração e comparativo ---------- */
+    .grade-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+    .grade-demo .cartao { padding: 18px; display: grid; gap: 10px; align-content: start; }
+    .grade-demo h2 { font-size: 16px; }
+    .campo-link { display: flex; gap: 8px; flex-wrap: wrap; }
+    .campo-link input { flex: 1 1 200px; padding: 8px 11px; border: 1px solid var(--borda); border-radius: 8px; background: var(--branco); min-width: 0; }
+    .comparativo-topo { padding: 16px 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .comparativo-topo select { padding: 7px 10px; border: 1px solid var(--borda); border-radius: 8px; background: var(--branco); }
+    .grade-comparativo { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 16px; }
+    .grade-comparativo .cartao { padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
+    .grade-comparativo h2 { font-size: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); background: var(--marinho); color: #fff; padding: 10px 18px; border-radius: 10px; box-shadow: var(--sombra); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px); z-index: 10; }
+    #toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.erro { background: var(--alta); }
+
+    @media (max-width: 900px) {
+      .area-revisao { grid-template-columns: 1fr; }
+      .fila { position: static; max-height: 70vh; }
+      .duas-colunas, .mudanca .lado { grid-template-columns: 1fr; }
+      .grade-comparativo { grid-template-columns: 1fr; }
+      .decisao { position: static; }
+      .paginacao { flex-wrap: wrap; }
+      .grade-comparativo .cartao, .grade-demo .cartao { min-width: 0; }
+    }
   </style>
 </head>
 <body>
+<header class="topo">
+  <div class="topo-linha">
+    <div class="marca"><span class="ponto" aria-hidden="true"></span>YouAudit <small>promessa × entrega, antes da venda</small></div>
+  </div>
+  <nav class="abas-topo" role="tablist" aria-label="Seções">
+    <button role="tab" data-vista="fila" aria-selected="true">Fila de revisão</button>
+    <button role="tab" data-vista="comparativo" aria-selected="false">Comparativo</button>
+    <button role="tab" data-vista="demo" aria-selected="false">Demonstração</button>
+  </nav>
+</header>
+
 <main>
-  <h1>YouAudit</h1>
-  <p class="subtitulo">Promessas da página de venda × regras e entrega. Os alertas são indícios para revisão humana: o sistema não aprova nem reprova produto.</p>
+  <!-- ===== Fila de revisão ===== -->
+  <section class="vista" id="vista-fila">
+    <div class="area-revisao">
+      <aside class="cartao fila" aria-label="Fila de revisão">
+        <div class="fila-topo">
+          <h2>Fila de revisão <span class="suave pequeno-texto" id="fila-total"></span></h2>
+          <input class="busca" id="busca" type="search" placeholder="Buscar produto" aria-label="Buscar produto" autocomplete="off">
+          <div class="chips" id="chips-faixa" aria-label="Filtrar por risco"></div>
+          <div class="chips" id="chips-origem" aria-label="Filtrar por origem"></div>
+        </div>
+        <ul class="fila-lista" id="fila"></ul>
+        <div class="paginacao" id="paginacao"></div>
+      </aside>
 
-  <div class="aviso" role="note">
-    <strong>Protótipo com gatilho simulado e dados fictícios.</strong>
-    O evento "produto enviado para aprovação" é simulado. Itens <b>SIMULADO</b> são produtos fictícios. Itens <b>REAL</b> vêm de
-    páginas públicas e aparecem só com id anônimo (pagina-NN, link-NN). Os dois nunca entram juntos numa mesma métrica.
-    O relatório ao produtor é um envio simulado.
-  </div>
+      <section class="cartao" id="detalhe" aria-live="polite"></section>
+    </div>
+  </section>
 
-  <h2>Simulador (gatilho simulado)</h2>
-  <div class="painel">
-    <button id="botao-simulador" type="button">Iniciar simulador (18 produtos fictícios)</button>
-    <span class="motivo">Dispara um evento "produto enviado" a cada 1,5 s; a fila se enche sozinha.</span>
-  </div>
-  <div id="resultado-simulador" class="resultado" aria-live="polite"></div>
+  <!-- ===== Comparativo ===== -->
+  <section class="vista" id="vista-comparativo" hidden>
+    <div class="cartao comparativo-topo">
+      <h2 style="font-size:16px">Baseline × YouAudit</h2>
+      <select id="divisao" aria-label="Divisão do gabarito">
+        <option value="DESENVOLVIMENTO">Desenvolvimento</option>
+        <option value="RESERVADO">Reservado (só depois de congelar, uma vez)</option>
+      </select>
+      <button id="botao-comparativo" type="button" class="botao">Calcular</button>
+      <details class="ajuda"><summary aria-label="Como ler">?</summary>
+        <p>O mesmo conjunto passa por um verificador convencional (palavras-chave e números, sem IA) e pelo YouAudit.
+          REAL e SIMULADO nunca entram na mesma conta. Os números são calculados pelo código sobre o que está no banco;
+          "não medido" quando não há dado. Cerca de 60 itens não dão significância estatística.</p>
+      </details>
+    </div>
+    <div id="comparativo"></div>
+  </section>
 
-  <h2>Auditar um link</h2>
-  <form id="form-link">
-    <input id="url" type="url" required aria-label="URL da página de venda" placeholder="https://… (página de venda pública)" autocomplete="off">
-    <button id="botao-link" type="submit">Auditar</button>
-  </form>
-  <div id="resultado-link" class="resultado" aria-live="polite"></div>
-
-  <h2>Lote de links reais</h2>
-  <div class="painel">
-    <button id="botao-lote" type="button" class="secundario">Disparar lote (data/real/urls.txt)</button>
-    <span class="motivo">Coleta as páginas. Páginas REAIS não passam pela IA sozinhas: use "Processar" no detalhe.</span>
-  </div>
-  <div id="resultado-lote" class="resultado" aria-live="polite"></div>
-
-  <h2>Fila de revisão</h2>
-  <div class="tabela">
-    <table>
-      <thead>
-      <tr>
-        <th>Produto</th><th>Origem</th><th>Entrada</th><th>Versão</th><th>Auditoria</th>
-        <th>Pontuação</th><th>Situação do produto</th><th>Criada em</th>
-      </tr>
-      </thead>
-      <tbody id="fila"></tbody>
-    </table>
-  </div>
-  <p class="motivo">Atualiza a cada 3 s. Clique numa linha para ver o detalhe. A pontuação só ordena a fila; quem decide é uma pessoa.</p>
-
-  <section id="detalhe" hidden aria-live="polite"></section>
-
-  <h2>Comparativo baseline × YouAudit</h2>
-  <div class="painel">
-    <select id="divisao" aria-label="Divisão do gabarito">
-      <option value="DESENVOLVIMENTO">DESENVOLVIMENTO</option>
-      <option value="RESERVADO">RESERVADO (só no Dia 3, uma vez, depois de congelar)</option>
-    </select>
-    <button id="botao-comparativo" type="button" class="secundario">Calcular</button>
-  </div>
-  <p class="motivo">REAL e SIMULADO ficam sempre separados. Os números são calculados pelo código sobre o que está no banco; "não medido" quando não há dado.</p>
-  <div id="comparativo"></div>
+  <!-- ===== Demonstração ===== -->
+  <section class="vista" id="vista-demo" hidden>
+    <div class="grade-demo">
+      <div class="cartao">
+        <h2>Simulador</h2>
+        <p class="suave" style="margin:0">Os produtos chegam um a um, enviados para aprovação.</p>
+        <div><button id="botao-simulador" type="button" class="botao destaque">Iniciar simulador</button></div>
+      </div>
+      <div class="cartao">
+        <h2>Auditar um link</h2>
+        <p class="suave" style="margin:0">Uma página de venda pública, coletada e auditada na hora.</p>
+        <form id="form-link" class="campo-link">
+          <input id="url" type="url" required aria-label="URL da página de venda" placeholder="https://…" autocomplete="off">
+          <button id="botao-link" type="submit" class="botao">Auditar</button>
+        </form>
+      </div>
+      <div class="cartao">
+        <h2>Lote de links reais</h2>
+        <p class="suave" style="margin:0">Coleta as páginas de <span class="trecho">data/real/urls.txt</span>. A IA roda nelas pelo botão "Processar" no detalhe.</p>
+        <div><button id="botao-lote" type="button" class="botao contorno">Disparar lote</button></div>
+      </div>
+    </div>
+  </section>
 </main>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
   // Todo dado vindo do servidor entra na tela por textContent, nunca por innerHTML:
   // assim nenhum texto de página consegue virar HTML ou script (regra 3: texto de página é dado).
 
   const NOMES_DECISAO = { LIBERAR: 'Liberar', PEDIR_AJUSTE: 'Pedir ajuste', ESCALAR: 'Escalar' };
+  const NOMES_FAIXA = { ALTA: 'Risco alto', MEDIA: 'Risco médio', BAIXA: 'Risco baixo' };
+  const NOMES_STATUS_PRODUTO = { EM_ANALISE: 'Em análise', AGUARDANDO_DECISAO: 'Aguardando decisão', LIBERADO: 'Liberado',
+    AJUSTE_PEDIDO: 'Ajuste pedido', ESCALADO: 'Escalado' };
+  const NOMES_STATUS_AUDITORIA = { EM_ANALISE: 'Analisando…', CONCLUIDA: 'Concluída', FALHOU: 'Falhou', COLETA_INSUFICIENTE: 'Coleta insuficiente' };
+  const NOMES_ESTADO = { PENDENTE: 'A revisar', CONFIRMADO: 'Confirmado', DESCARTADO: 'Descartado' };
+  const NOMES_SEVERIDADE = { ALTA: 'alta', MEDIA: 'média', BAIXA: 'baixa' };
+  const NOMES_SITUACAO = { RESOLVIDO: 'Resolvido', CONTINUA: 'Continua sem mudança', IGUAL_ANTERIOR: 'Igual à anterior', NOVO: 'Novo' };
+  const NOMES_ORIGEM = { REAL: 'Real', SIMULADO: 'Simulado' };
+  const NOMES_ALERTA = { TERMO_PROIBIDO: 'Termo proibido', PROMESSA_RESULTADO_SEM_RESSALVA: 'Promessa de resultado sem ressalva',
+    RECONHECIMENTO_SEM_COMPROVANTE: 'Reconhecimento sem comprovante', QUANTIDADE_DIVERGENTE: 'Quantidade diferente da entrega',
+    ELEMENTO_AUSENTE_NA_ENTREGA: 'Prometido, mas ausente na entrega', CUSTO_OMITIDO: 'Custo extra não informado',
+    INFO_ESSENCIAL_AUSENTE: 'Informação essencial ausente' };
+  const NOMES_PROMESSA = { RESULTADO_FINANCEIRO: 'Resultado financeiro', PRAZO_RESULTADO: 'Prazo de resultado',
+    QUANTIDADE_CONTEUDO: 'Quantidade de conteúdo', CERTIFICADO: 'Certificado', RECONHECIMENTO_OFICIAL: 'Reconhecimento oficial',
+    BONUS: 'Bônus', ACESSO: 'Acesso', GARANTIA: 'Garantia', PRECO_CONDICOES: 'Preço e condições', CUSTO_ADICIONAL: 'Custo adicional',
+    DEPOIMENTO_RESULTADO: 'Depoimento de resultado', ESCASSEZ_URGENCIA: 'Escassez ou urgência', SAUDE_CURA: 'Saúde ou cura', OUTRO: 'Outro' };
+  const nomeAlerta = t => NOMES_ALERTA[t] || t;
+  const nomePromessa = t => NOMES_PROMESSA[t] || t;
   // Produtos que têm versão corrigida na lista "reenvios" de data/simulado/produtos.json.
   const COM_REENVIO = new Set(['sim-001', 'sim-017']);
-  const NOMES_SITUACAO = { RESOLVIDO: 'resolvido', CONTINUA: 'continua sem mudança', IGUAL_ANTERIOR: 'igual à versão anterior', NOVO: 'novo' };
-  let selecionado = null;
+  const POR_PAGINA = 10;
 
+  let itensFila = [];
+  let pagina = 1, filtroFaixa = 'TODAS', filtroOrigem = 'TODAS', busca = '';
+  let selecionado = null, statusSelecionado = null, abaDetalhe = 'alertas', decisaoEscolhida = null;
+
+  // ---------- Utilidades ----------
   function el(tag, texto, classe) {
     const e = document.createElement(tag);
     if (classe) e.className = classe;
@@ -152,92 +301,406 @@
     return e;
   }
   function celula(texto, classe) { return el('td', texto, classe); }
-  function etiqueta(valor, prefixo) { return el('span', valor, 'etiqueta ' + prefixo + '-' + valor); }
-  function celulaEtiqueta(valor, prefixo) { const td = el('td'); td.appendChild(etiqueta(valor, prefixo)); return td; }
+  function etiqueta(texto, classe) { return el('span', texto, 'etiqueta ' + (classe || '')); }
   function dataHora(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
-  function mostrar(id, texto, erro) {
-    const e = document.getElementById(id);
-    e.textContent = texto;
-    e.classList.toggle('erro', !!erro);
+  function ajuda(texto) {
+    const d = el('details', null, 'ajuda');
+    const s = el('summary', '?');
+    s.setAttribute('aria-label', 'Saiba mais');
+    d.append(s, el('p', texto));
+    return d;
+  }
+  let toastTimer;
+  function avisar(texto, erro) {
+    const t = document.getElementById('toast');
+    t.textContent = texto;
+    t.classList.toggle('erro', !!erro);
+    t.classList.add('visivel');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visivel'), erro ? 6000 : 3200);
   }
   async function mensagemDeErro(resposta) {
     try { const j = await resposta.json(); return j.message || ('HTTP ' + resposta.status); }
     catch (e) { return 'HTTP ' + resposta.status; }
   }
+  async function postar(url, corpo) {
+    return fetch(url, corpo ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }
+                            : { method: 'POST' });
+  }
+
+  // ---------- Abas do topo ----------
+  function irPara(vista) {
+    document.querySelectorAll('nav.abas-topo button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.vista === vista)));
+    document.querySelectorAll('.vista').forEach(v => { v.hidden = v.id !== 'vista-' + vista; });
+  }
+  document.querySelectorAll('nav.abas-topo button').forEach(b => b.addEventListener('click', () => irPara(b.dataset.vista)));
 
   // ---------- Fila ----------
   async function atualizarFila() {
-    const corpo = document.getElementById('fila');
-    let itens;
     try {
       const resposta = await fetch('/api/fila');
       if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
-      itens = await resposta.json();
+      itensFila = await resposta.json();
     } catch (e) {
       return; // mantém a última fila na tela; tenta de novo em 3 s
     }
-    corpo.replaceChildren();
-    if (itens.length === 0) {
-      const tr = el('tr');
-      const td = celula('Fila vazia. Inicie o simulador, audite um link ou dispare o lote.', 'vazio');
-      td.colSpan = 8;
-      tr.appendChild(td);
-      corpo.appendChild(tr);
-      return;
-    }
-    for (const item of itens) {
-      const tr = el('tr');
-      if (item.produtoId === selecionado) tr.classList.add('selecionada');
-      tr.addEventListener('click', () => abrirDetalhe(item.produtoId));
-      tr.appendChild(celula(item.produtoId));
-      tr.appendChild(celulaEtiqueta(item.origem, 'origem'));
-      tr.appendChild(celulaEtiqueta(item.entrada, 'entrada'));
-      tr.appendChild(celula(String(item.versao), 'num'));
-      const status = celula(item.statusAuditoria);
-      if (item.motivoFalha) status.appendChild(el('div', item.motivoFalha, 'motivo'));
-      tr.appendChild(status);
-      const pont = celula(item.pontuacao == null ? '—' : String(item.pontuacao) + ' ', 'num');
-      if (item.faixa) pont.appendChild(etiqueta(item.faixa, 'faixa'));
-      tr.appendChild(pont);
-      tr.appendChild(celula(item.statusProduto || '—'));
-      tr.appendChild(celula(dataHora(item.criadaEm)));
-      corpo.appendChild(tr);
+    desenharFila();
+    // Se o produto aberto mudou de situação (ex.: a IA terminou), o detalhe se atualiza sozinho.
+    const atual = itensFila.find(i => i.produtoId === selecionado);
+    if (atual) {
+      const chave = atual.versao + '|' + atual.statusAuditoria + '|' + atual.statusProduto;
+      if (statusSelecionado !== null && chave !== statusSelecionado) abrirDetalhe(selecionado);
     }
   }
 
+  function filtrados() {
+    const termo = busca.trim().toLowerCase();
+    return itensFila.filter(i =>
+      (filtroFaixa === 'TODAS' || i.faixa === filtroFaixa) &&
+      (filtroOrigem === 'TODAS' || i.origem === filtroOrigem) &&
+      (!termo || i.produtoId.toLowerCase().includes(termo) || (i.nome || '').toLowerCase().includes(termo)));
+  }
+
+  function desenharChips(id, opcoes, atual, aoEscolher) {
+    const caixa = document.getElementById(id);
+    caixa.replaceChildren();
+    for (const [valor, texto] of opcoes) {
+      const b = el('button', texto, 'chip');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(valor === atual));
+      b.addEventListener('click', () => { aoEscolher(valor); pagina = 1; desenharFila(); });
+      caixa.appendChild(b);
+    }
+  }
+
+  function desenharFila() {
+    const conta = f => itensFila.filter(i => i.faixa === f).length;
+    desenharChips('chips-faixa', [['TODAS', 'Todos'], ['ALTA', 'Alto · ' + conta('ALTA')], ['MEDIA', 'Médio · ' + conta('MEDIA')],
+      ['BAIXA', 'Baixo · ' + conta('BAIXA')]], filtroFaixa, v => { filtroFaixa = v; });
+    desenharChips('chips-origem', [['TODAS', 'Todas as origens'], ['SIMULADO', 'Simulado'], ['REAL', 'Real']], filtroOrigem, v => { filtroOrigem = v; });
+    document.getElementById('fila-total').textContent = itensFila.length ? itensFila.length + ' produtos' : '';
+
+    const lista = document.getElementById('fila');
+    const pag = document.getElementById('paginacao');
+    lista.replaceChildren();
+    pag.replaceChildren();
+
+    if (itensFila.length === 0) {
+      const v = el('li', null, 'vazio');
+      v.appendChild(el('h3', 'Nenhum produto na fila'));
+      v.appendChild(el('p', 'Os produtos aparecem aqui quando são enviados para aprovação.', 'suave'));
+      const b = el('button', 'Iniciar simulador', 'botao destaque');
+      b.addEventListener('click', iniciarSimulador);
+      const l = el('button', 'Auditar um link', 'botao contorno pequeno');
+      l.addEventListener('click', () => { irPara('demo'); document.getElementById('url').focus(); });
+      v.append(b, l);
+      lista.appendChild(v);
+      return;
+    }
+
+    const itens = filtrados();
+    const paginas = Math.max(1, Math.ceil(itens.length / POR_PAGINA));
+    if (pagina > paginas) pagina = paginas;
+    const inicio = (pagina - 1) * POR_PAGINA;
+    if (itens.length === 0) lista.appendChild(el('li', 'Nenhum produto com esses filtros.', 'vazio suave'));
+    for (const item of itens.slice(inicio, inicio + POR_PAGINA)) lista.appendChild(linhaFila(item));
+
+    pag.appendChild(el('span', itens.length ? (inicio + 1) + '–' + Math.min(inicio + POR_PAGINA, itens.length) + ' de ' + itens.length : ''));
+    const botoes = el('div', null, 'botoes');
+    const anterior = el('button', '‹');
+    anterior.setAttribute('aria-label', 'Página anterior');
+    anterior.disabled = pagina === 1;
+    anterior.addEventListener('click', () => { pagina--; desenharFila(); });
+    botoes.appendChild(anterior);
+    for (let p = 1; p <= paginas; p++) {
+      const b = el('button', String(p));
+      if (p === pagina) b.setAttribute('aria-current', 'page');
+      b.addEventListener('click', () => { pagina = p; desenharFila(); });
+      botoes.appendChild(b);
+    }
+    const proxima = el('button', '›');
+    proxima.setAttribute('aria-label', 'Próxima página');
+    proxima.disabled = pagina === paginas;
+    proxima.addEventListener('click', () => { pagina++; desenharFila(); });
+    botoes.appendChild(proxima);
+    pag.appendChild(botoes);
+  }
+
+  function linhaFila(item) {
+    const li = el('li');
+    const b = el('button', null, 'item' + (item.produtoId === selecionado ? ' selecionado' : ''));
+    b.type = 'button';
+    let nota;
+    if (item.statusAuditoria === 'EM_ANALISE') nota = el('span', '…', 'nota analisando');
+    else if (item.pontuacao == null) nota = el('span', '!', 'nota falhou');
+    else nota = el('span', String(item.pontuacao), 'nota faixa-' + item.faixa);
+    nota.title = item.faixa ? NOMES_FAIXA[item.faixa] : NOMES_STATUS_AUDITORIA[item.statusAuditoria];
+    const texto = el('span', null, 'item-texto');
+    texto.appendChild(el('b', item.nome && item.nome !== item.produtoId ? item.nome : item.produtoId));
+    const situacao = item.statusAuditoria === 'CONCLUIDA' ? (NOMES_STATUS_PRODUTO[item.statusProduto] || '—')
+      : NOMES_STATUS_AUDITORIA[item.statusAuditoria] || item.statusAuditoria;
+    texto.appendChild(el('small', item.produtoId + (item.versao > 1 ? ' · v' + item.versao : '') + ' · ' + situacao));
+    b.append(nota, texto, etiqueta(NOMES_ORIGEM[item.origem] || item.origem, 'origem-' + item.origem));
+    b.addEventListener('click', () => abrirDetalhe(item.produtoId));
+    li.appendChild(b);
+    return li;
+  }
+
+  document.getElementById('busca').addEventListener('input', e => { busca = e.target.value; pagina = 1; desenharFila(); });
+
   // ---------- Detalhe ----------
+  function detalheVazio() {
+    const caixa = document.getElementById('detalhe');
+    const v = el('div', null, 'vazio');
+    v.style.margin = 'auto';
+    v.appendChild(el('h3', 'Escolha um produto na fila'));
+    v.appendChild(el('p', 'Os mais arriscados aparecem primeiro.', 'suave'));
+    caixa.replaceChildren(v);
+  }
+
+  async function abrirDetalhe(id) {
+    if (id !== selecionado) { abaDetalhe = 'alertas'; decisaoEscolhida = null; }
+    selecionado = id;
+    history.replaceState(null, '', '#produto=' + encodeURIComponent(id) + '&aba=' + abaDetalhe);
+    desenharFila();
+    const caixa = document.getElementById('detalhe');
+    let d, versoes, relatorio = null, comparacao = null, registros = [];
+    try {
+      const base = '/api/produtos/' + encodeURIComponent(id);
+      const r = await fetch(base);
+      if (!r.ok) { caixa.replaceChildren(el('p', 'Não consegui abrir ' + id + ': ' + await mensagemDeErro(r), 'barra erro')); return; }
+      d = await r.json();
+      const [rv, rr, rc, rg] = await Promise.all([fetch(base + '/auditorias'), fetch(base + '/relatorio'),
+        fetch(base + '/comparacao'), fetch(base + '/registros')]);
+      versoes = rv.ok ? await rv.json() : [];
+      if (rr.ok) relatorio = await rr.json();
+      if (rc.ok) comparacao = await rc.json();   // 404 = não há duas versões concluídas: a aba não aparece
+      if (rg.ok) registros = await rg.json();
+    } catch (e) {
+      caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'barra erro'));
+      return;
+    }
+    statusSelecionado = d.auditoria.versao + '|' + d.auditoria.status + '|' + d.status;
+    desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros);
+  }
+
+  function desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros) {
+    caixa.replaceChildren();
+    const a = d.auditoria;
+
+    // Topo: quem é o produto e as ações do pipeline
+    const topo = el('div', null, 'detalhe-topo');
+    const ident = el('div');
+    ident.appendChild(el('h2', d.nome && d.nome !== d.id ? d.nome : d.id));
+    const meta = el('div', null, 'meta');
+    meta.append(el('span', d.id, 'suave pequeno-texto'), etiqueta(NOMES_ORIGEM[d.origem] || d.origem, 'origem-' + d.origem),
+      etiqueta('versão ' + a.versao), etiqueta(NOMES_STATUS_PRODUTO[d.status] || d.status || '—'));
+    ident.appendChild(meta);
+    topo.appendChild(ident);
+    const acoes = el('div', null, 'acoes');
+    if (a.status === 'EM_ANALISE' || a.status === 'FALHOU') {
+      const b = el('button', 'Processar com a IA', 'botao');
+      b.title = d.origem === 'REAL' ? 'Páginas reais só passam pela IA por este botão (as RESERVADO só depois do congelamento).' : '';
+      b.addEventListener('click', () => acao(b, '/api/produtos/' + encodeURIComponent(d.id) + '/processar', null, 'Processamento agendado.'));
+      acoes.appendChild(b);
+    }
+    if (d.origem === 'SIMULADO' && COM_REENVIO.has(d.id)) {
+      const b = el('button', 'Reenviar versão corrigida', 'botao contorno');
+      b.title = 'Simula o produtor reenviando a página corrigida';
+      b.addEventListener('click', () => acao(b, '/api/simulador/reenviar/' + encodeURIComponent(d.id), null, 'Versão corrigida enviada.'));
+      acoes.appendChild(b);
+    }
+    topo.appendChild(acoes);
+    caixa.appendChild(topo);
+
+    // Resumo: pontuação, risco e a conta
+    const resumo = el('div', null, 'resumo');
+    const anel = el('div', null, 'anel' + (a.faixa ? ' faixa-' + a.faixa : ''));
+    anel.append(el('b', a.pontuacao == null ? '—' : String(a.pontuacao)), el('span', 'de 100'));
+    resumo.appendChild(anel);
+    const rt = el('div', null, 'resumo-texto');
+    const pendentes = d.achados.filter(x => x.estado === 'PENDENTE').length;
+    if (a.status === 'CONCLUIDA') {
+      rt.appendChild(el('span', NOMES_FAIXA[a.faixa] || '—', 'risco'));
+      rt.appendChild(el('span', d.achados.length === 0 ? 'Nenhum alerta encontrado.'
+        : d.achados.length + (d.achados.length === 1 ? ' alerta' : ' alertas') + ' · ' + pendentes + ' a revisar'));
+      if (d.conta.length) rt.appendChild(el('span', 'Conta: ' + d.conta.map(x => x.peso).join(' + ') + (d.conta.length > 1 ? ' (cada tipo conta uma vez; teto 100)' : ''), 'suave pequeno-texto'));
+      rt.appendChild(el('span', d.afirmacoes.length + ' promessas lidas pela IA e conferidas pelo código · ' +
+        (d.afirmacoesDescartadas + d.descartesCruzamento) + ' recusadas por não terem trecho literal', 'suave pequeno-texto'));
+    } else {
+      rt.appendChild(el('span', NOMES_STATUS_AUDITORIA[a.status] || a.status, 'risco'));
+      rt.appendChild(el('span', a.status === 'EM_ANALISE' ? 'A página está sendo lida. Esta tela se atualiza sozinha.' : 'A auditoria não terminou.', 'suave'));
+    }
+    resumo.appendChild(rt);
+    caixa.appendChild(resumo);
+
+    const avisos = el('div', null, 'avisos-detalhe');
+    if (a.motivoFalha) avisos.appendChild(el('div', a.motivoFalha, 'barra erro'));
+    if (d.liberacaoSugerida) avisos.appendChild(el('div', 'Risco baixo e nenhum alerta grave: pode ser liberado. A decisão é sua.', 'barra ok'));
+    if (a.cruzamentoPulado) avisos.appendChild(el('div', 'Sem entrega cadastrada: as promessas não foram comparadas com a entrega.', 'barra info'));
+    if (avisos.childNodes.length) caixa.appendChild(avisos);
+
+    // Abas do detalhe (só aparecem as que têm conteúdo)
+    const abas = [['alertas', 'Alertas', d.achados.length], ['pagina', 'Página × entrega', null]];
+    if (comparacao) abas.push(['mudancas', 'O que mudou', comparacao.contagem.novos + comparacao.contagem.resolvidos]);
+    abas.push(['relatorio', 'Relatório ao produtor', null]);
+    if (registros.length) abas.push(['registro', 'Registro aprovado', registros.length]);
+    abas.push(['historico', 'Histórico', versoes.length]);
+    if (!abas.some(x => x[0] === abaDetalhe)) abaDetalhe = 'alertas';
+
+    const barraAbas = el('div', null, 'abas-detalhe');
+    barraAbas.setAttribute('role', 'tablist');
+    const painel = el('div', null, 'painel-aba');
+    const desenharAba = () => {
+      barraAbas.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.aba === abaDetalhe)));
+      painel.replaceChildren(conteudoAba(abaDetalhe, d, versoes, relatorio, comparacao, registros));
+    };
+    for (const [chave, nome, n] of abas) {
+      const b = el('button', nome);
+      b.setAttribute('role', 'tab');
+      b.dataset.aba = chave;
+      if (n != null) b.appendChild(el('span', String(n), 'conta-aba'));
+      b.addEventListener('click', () => {
+        abaDetalhe = chave;
+        history.replaceState(null, '', '#produto=' + encodeURIComponent(d.id) + '&aba=' + chave);
+        desenharAba();
+      });
+      barraAbas.appendChild(b);
+    }
+    caixa.append(barraAbas, painel);
+    desenharAba();
+
+    caixa.appendChild(barraDecisao(d));
+  }
+
+  function conteudoAba(aba, d, versoes, relatorio, comparacao, registros) {
+    const f = document.createDocumentFragment();
+    if (aba === 'alertas') {
+      if (d.achados.length === 0) {
+        f.appendChild(el('p', d.auditoria.status === 'CONCLUIDA' ? 'Nenhum alerta. A página não tem indícios de desacordo com as regras ou com a entrega.' : 'Os alertas aparecem quando a auditoria terminar.', 'suave'));
+      }
+      for (const x of d.achados) f.appendChild(cartaoAchado(x, d.id));
+    } else if (aba === 'pagina') {
+      const g = el('div', null, 'duas-colunas');
+      const c1 = el('div');
+      c1.appendChild(el('h3', 'Página de venda'));
+      c1.appendChild(paginaDestacada(d.paginaTexto || '', d.achados.map(x => x.evidenciaPagina).filter(Boolean)));
+      const c2 = el('div');
+      c2.appendChild(el('h3', 'O que o produto entrega (' + d.entrega.length + ' itens)'));
+      if (d.entrega.length === 0) c2.appendChild(el('p', 'Sem entrega cadastrada.', 'suave'));
+      else {
+        const ul = el('ul', null, 'entrega');
+        const trechosEntrega = d.achados.map(x => x.evidenciaEntrega).filter(Boolean);
+        for (const i of d.entrega) {
+          const li = el('li');
+          li.append(el('span', i.tipo, 'tipo'), document.createTextNode(i.titulo));
+          if (i.descricao) { li.appendChild(document.createTextNode(' — ')); li.appendChild(destacar(i.descricao, trechosEntrega)); }
+          ul.appendChild(li);
+        }
+        c2.appendChild(ul);
+      }
+      g.append(c1, c2);
+      f.appendChild(g);
+    } else if (aba === 'mudancas') {
+      f.appendChild(secaoComparacao(comparacao));
+    } else if (aba === 'relatorio') {
+      f.appendChild(el('p', 'O que o produtor recebe (envio simulado).', 'suave pequeno-texto'));
+      f.appendChild(relatorio ? el('pre', relatorio.conteudo, 'relatorio') : el('p', 'O relatório aparece quando a auditoria terminar.', 'suave'));
+    } else if (aba === 'registro') {
+      f.appendChild(secaoRegistros(registros));
+    } else if (aba === 'historico') {
+      f.appendChild(el('h3', 'Versões'));
+      const t = el('table');
+      const cab = el('tr');
+      ['Versão', 'Auditoria', 'Pontuação', 'Tipos de alerta', 'Enviada em'].forEach(x => cab.appendChild(el('th', x)));
+      t.appendChild(cab);
+      for (const v of versoes) {
+        const tr = el('tr');
+        tr.appendChild(celula(String(v.versao), 'num'));
+        tr.appendChild(celula(NOMES_STATUS_AUDITORIA[v.status] || v.status));
+        tr.appendChild(celula(v.pontuacao == null ? '—' : v.pontuacao + ' · ' + (NOMES_FAIXA[v.faixa] || ''), 'num'));
+        tr.appendChild(celula(v.tiposDeAchado.map(nomeAlerta).join(', ') || '—'));
+        tr.appendChild(celula(dataHora(v.criadaEm)));
+        t.appendChild(tr);
+      }
+      const rx = el('div', null, 'rolagem-x');
+      rx.appendChild(t);
+      f.appendChild(rx);
+      f.appendChild(el('h3', 'Decisões'));
+      if (d.decisoes.length === 0) f.appendChild(el('p', 'Nenhuma decisão registrada.', 'suave'));
+      for (const dec of d.decisoes) {
+        const p = el('p');
+        p.style.margin = '0 0 6px';
+        p.append(etiqueta(NOMES_DECISAO[dec.decisao]), document.createTextNode(' ' + dec.motivo + ' '), el('span', dataHora(dec.data), 'suave pequeno-texto'));
+        f.appendChild(p);
+      }
+    }
+    return f;
+  }
+
+  function cartaoAchado(x, produtoId) {
+    const c = el('div', null, 'achado nivel-' + x.severidade);
+    const t = el('div', null, 'linha');
+    t.append(el('span', x.regraDescricao || x.regra, 'titulo'), etiqueta('severidade ' + (NOMES_SEVERIDADE[x.severidade] || x.severidade), 'sev-' + x.severidade),
+      el('span', '+' + x.peso + ' pontos', 'suave pequeno-texto'), etiqueta(NOMES_ESTADO[x.estado] || x.estado, 'estado-' + x.estado));
+    c.appendChild(t);
+    if (x.evidenciaPagina) { const p = el('div', 'Na página: '); p.appendChild(el('span', x.evidenciaPagina, 'trecho')); c.appendChild(p); }
+    if (x.evidenciaEntrega) { const p = el('div', 'Na entrega: '); p.appendChild(el('span', x.evidenciaEntrega, 'trecho')); c.appendChild(p); }
+    if (x.detalhe) c.appendChild(el('div', x.detalhe, 'suave pequeno-texto'));
+    if (x.sugestao) {
+      const s = el('div', null, 'sugestao');
+      s.append(el('b', 'Sugestão ao produtor: '), document.createTextNode(x.sugestao));
+      s.title = x.sugestaoFonte === 'IA' ? 'Redigida pela IA e conferida pelo código' : 'Texto padrão';
+      c.appendChild(s);
+    }
+    const b = el('div', null, 'botoes');
+    const confirmar = el('button', 'Confirmar alerta', 'botao pequeno');
+    const descartar = el('button', 'Descartar', 'botao contorno pequeno');
+    confirmar.addEventListener('click', () => revisar(x.id, 'CONFIRMADO', produtoId, confirmar));
+    descartar.addEventListener('click', () => revisar(x.id, 'DESCARTADO', produtoId, descartar));
+    b.append(confirmar, descartar);
+    c.appendChild(b);
+    return c;
+  }
+
   // O que mudou da versão anterior para a atual. Só mostra: não muda o estado de nenhum alerta.
   function secaoComparacao(c) {
     const s = el('div');
-    s.appendChild(el('h3', 'O que mudou da versão ' + c.versaoAnterior + ' para a ' + c.versaoAtual));
     const pont = v => v == null ? '—' : String(v);
-    s.appendChild(el('p', 'Pontuação ' + pont(c.pontuacaoAnterior) + ' → ' + pont(c.pontuacaoAtual) + ' · alertas ' +
-      c.contagem.alertasAnterior + ' → ' + c.contagem.alertasAtual + ' · ' + c.contagem.resolvidos + ' resolvidos · ' +
-      (c.contagem.continuam + c.contagem.iguaisAnterior) + ' voltaram idênticos · ' + c.contagem.novos + ' novos · ' +
-      c.contagem.semJulgamentoAnterior + ' sem julgamento anterior (' + c.origem + ').'));
+    const numeros = el('div', null, 'numeros');
+    const numero = (valor, rotulo) => { const n = el('div', null, 'numero'); n.append(el('b', valor), el('span', rotulo)); return n; };
+    numeros.append(numero(pont(c.pontuacaoAnterior) + ' → ' + pont(c.pontuacaoAtual), 'pontuação v' + c.versaoAnterior + ' → v' + c.versaoAtual),
+      numero(String(c.contagem.resolvidos), 'resolvidos'),
+      numero(String(c.contagem.continuam + c.contagem.iguaisAnterior), 'voltaram idênticos'),
+      numero(String(c.contagem.novos), 'novos'),
+      numero(String(c.contagem.semJulgamentoAnterior), 'ninguém julgou ainda'));
+    s.appendChild(numeros);
     s.appendChild(el('p', c.decisaoEntreVersoes
       ? 'Decisão sobre a versão ' + c.versaoAnterior + ': ' + NOMES_DECISAO[c.decisaoEntreVersoes.decisao] + ' — ' + c.decisaoEntreVersoes.motivo
-      : 'Nenhuma decisão foi registrada sobre a versão ' + c.versaoAnterior + ' antes do reenvio.', 'motivo'));
+      : 'Nenhuma decisão foi registrada sobre a versão ' + c.versaoAnterior + ' antes do reenvio.', 'suave pequeno-texto'));
 
-    const rotulo = el('label');
+    const rotulo = el('label', null, 'pequeno-texto');
     const filtro = el('input');
     filtro.type = 'checkbox';
-    rotulo.append(filtro, document.createTextNode(' mostrar só o que ninguém julgou ainda'));
-    s.appendChild(rotulo);
+    rotulo.append(filtro, document.createTextNode(' mostrar só o que ninguém julgou ainda '));
+    const topo = el('div');
+    topo.style.marginBottom = '10px';
+    topo.append(rotulo, ajuda('"Mesmo alerta" = mesmo tipo e mesmos trechos, caractere por caractere. Uma frase reescrita que ainda é ' +
+      'sinalizada aparece como novo. A decisão anterior é só mostrada: os alertas da versão nova começam a revisar. ' +
+      'Números do produto ' + c.origem + '.'));
+    s.appendChild(topo);
 
     const lista = el('div');
     const nuncaJulgado = i => i.situacao === 'NOVO' || (i.atual && i.anterior && i.anterior.estado === 'PENDENTE');
     const desenhar = () => {
       lista.replaceChildren();
       const itens = c.itens.filter(i => !filtro.checked || nuncaJulgado(i));
-      if (itens.length === 0) lista.appendChild(el('p', 'Nada a mostrar.', 'motivo'));
+      if (itens.length === 0) lista.appendChild(el('p', 'Nada a mostrar.', 'suave'));
       for (const i of itens) lista.appendChild(cartaoMudanca(i, c));
     };
     filtro.addEventListener('change', desenhar);
     desenhar();
     s.appendChild(lista);
-    s.appendChild(el('p', '"Mesmo alerta" = mesmo tipo e mesmos trechos, caractere por caractere. Frase reescrita que ainda é sinalizada aparece como novo. ' +
-      'A decisão anterior é só mostrada: os alertas da versão nova começam pendentes.', 'motivo'));
     return s;
   }
 
@@ -245,18 +708,17 @@
     const caixa = el('div', null, 'mudanca');
     const ref = i.atual || i.anterior;
     const t = el('div');
-    t.append(etiqueta(i.situacao, 'situacao'), document.createTextNode(' '), el('b', ref.tipo));
-    t.firstChild.textContent = NOMES_SITUACAO[i.situacao];
+    t.append(etiqueta(NOMES_SITUACAO[i.situacao], 'situacao-' + i.situacao), document.createTextNode(' '), el('b', nomeAlerta(ref.tipo)));
     caixa.appendChild(t);
     const lado = el('div', null, 'lado');
     const coluna = (titulo, a) => {
       const col = el('div');
-      col.appendChild(el('div', titulo, 'motivo'));
-      if (!a) { col.appendChild(el('span', '—', 'motivo')); return col; }
+      col.appendChild(el('div', titulo, 'suave pequeno-texto'));
+      if (!a) { col.appendChild(el('span', '—', 'suave')); return col; }
       const evid = [a.evidenciaPagina, a.evidenciaEntrega].filter(Boolean);
       col.appendChild(el('span', evid.length ? evid.join(' · ') : (a.detalhe || '—'), 'trecho'));
       if (a === i.anterior && a.estado !== 'PENDENTE') {
-        col.appendChild(el('div', 'Julgado na v' + c.versaoAnterior + ': ' + a.estado + (a.nota ? ' — ' + a.nota : ''), 'motivo'));
+        col.appendChild(el('div', 'Julgado na v' + c.versaoAnterior + ': ' + (NOMES_ESTADO[a.estado] || a.estado) + (a.nota ? ' — ' + a.nota : ''), 'suave pequeno-texto'));
       }
       return col;
     };
@@ -268,245 +730,107 @@
   // O que foi prometido em cada versão liberada, congelado no LIBERAR. Os dois sinais são recalculados pelo código.
   function secaoRegistros(registros) {
     const s = el('div');
-    s.appendChild(el('h3', 'Registro das promessas aprovadas'));
-    if (!registros.length) {
-      s.appendChild(el('p', 'Nenhuma versão liberada ainda. O registro é criado quando uma pessoa decide Liberar.', 'motivo'));
-      return s;
-    }
-    const sinal = (texto, tipo) => el('span', texto, 'etiqueta sinal-' + tipo);
+    const topo = el('p', 'O que foi prometido na versão liberada, guardado no momento da decisão. ', 'suave pequeno-texto');
+    topo.appendChild(ajuda('Registro de fatos, não selo nem parecer jurídico. O hash mostra alteração acidental; quem tem acesso ao ' +
+      'banco poderia alterar o conteúdo e recalcular o hash, então não é garantia de segurança.'));
+    s.appendChild(topo);
     for (const r of registros) {
       const c = r.conteudo;
       const caixa = el('div', null, 'registro');
       caixa.appendChild(el('div', 'Versão ' + r.versao + ' liberada em ' + dataHora(r.data) + ' — ' + r.motivo));
-      const sinais = el('div');
+      const sinais = el('div', null, 'linha');
+      sinais.style.margin = '6px 0';
       sinais.append(
-        r.integro ? sinal('conteúdo íntegro (hash confere)', 'ok') : sinal('conteúdo alterado depois de gravado', 'alerta'),
+        r.integro ? etiqueta('Registro íntegro', 'sinal-ok') : etiqueta('Registro alterado depois de gravado', 'sinal-alerta'),
         document.createTextNode(' '),
-        r.paginaMudouDesdeAprovacao === true ? sinal('a página mudou desde a aprovação', 'alerta')
-          : r.paginaMudouDesdeAprovacao === false ? sinal('página igual à aprovada', 'ok')
-          : sinal('não dá para saber se a página mudou', 'neutro'));
+        r.paginaMudouDesdeAprovacao === true ? etiqueta('A página mudou desde a aprovação', 'sinal-alerta')
+          : r.paginaMudouDesdeAprovacao === false ? etiqueta('Página igual à aprovada', 'sinal-ok')
+          : etiqueta('Não dá para saber se a página mudou', 'sinal-neutro'));
       caixa.appendChild(sinais);
-      if (c && c.aviso) caixa.appendChild(el('p', c.aviso, 'erro'));
+      if (c && c.aviso) caixa.appendChild(el('div', c.aviso, 'barra erro'));
       if (c) {
-        caixa.appendChild(el('div', c.promessas.length + ' promessas com trecho literal conferido · ' + c.alertas.length +
-          ' alertas, com o julgamento da pessoa no momento da aprovação · pontuação ' + (c.pontuacao == null ? '—' : c.pontuacao) +
-          ' (' + c.origem + ')', 'motivo'));
+        caixa.appendChild(el('div', c.promessas.length + ' promessas · ' + c.alertas.length + ' alertas com o julgamento do dia · pontuação ' +
+          (c.pontuacao == null ? '—' : c.pontuacao) + ' · ' + (NOMES_ORIGEM[c.origem] || c.origem), 'suave pequeno-texto'));
         const ul = el('ul');
         for (const pr of c.promessas) {
           const li = el('li');
-          li.append(el('b', pr.tipo + ' '), el('span', pr.trecho, 'trecho'));
+          li.append(el('b', nomePromessa(pr.tipo) + ' '), el('span', pr.trecho, 'trecho'));
           ul.appendChild(li);
         }
         for (const al of c.alertas) {
           const li = el('li');
-          li.append(etiqueta(al.estado, 'estado'), document.createTextNode(' ' + al.tipo + ' '),
+          li.append(etiqueta(NOMES_ESTADO[al.estado] || al.estado, 'estado-' + al.estado), document.createTextNode(' ' + nomeAlerta(al.tipo) + ' '),
             el('span', [al.evidenciaPagina, al.evidenciaEntrega].filter(Boolean).join(' · ') || al.detalhe || '—', 'trecho'));
-          if (al.nota) li.appendChild(el('span', ' — ' + al.nota, 'motivo'));
+          if (al.nota) li.appendChild(el('span', ' — ' + al.nota, 'suave'));
           ul.appendChild(li);
         }
         caixa.appendChild(ul);
       }
       caixa.appendChild(el('div', 'hash da página ' + (r.hashPagina ? r.hashPagina.slice(0, 12) + '…' : '—') +
-        ' · hash do registro ' + r.hashConteudo.slice(0, 12) + '…', 'motivo'));
+        ' · hash do registro ' + r.hashConteudo.slice(0, 12) + '…', 'suave pequeno-texto'));
       s.appendChild(caixa);
     }
-    s.appendChild(el('p', 'Registro de fatos, não selo nem parecer jurídico. O hash mostra alteração acidental; quem tem acesso ao banco ' +
-      'poderia alterar o conteúdo e recalcular o hash, então não é garantia de segurança.', 'motivo'));
     return s;
   }
 
-  async function abrirDetalhe(id) {
-    selecionado = id;
-    const caixa = document.getElementById('detalhe');
-    caixa.hidden = false;
-    let d, versoes, relatorio = null, comparacao = null, registros = [];
-    try {
-      const r = await fetch('/api/produtos/' + encodeURIComponent(id));
-      if (!r.ok) { caixa.replaceChildren(el('p', 'Não consegui abrir ' + id + ': ' + await mensagemDeErro(r), 'erro')); return; }
-      d = await r.json();
-      versoes = await (await fetch('/api/produtos/' + encodeURIComponent(id) + '/auditorias')).json();
-      const rr = await fetch('/api/produtos/' + encodeURIComponent(id) + '/relatorio');
-      if (rr.ok) relatorio = await rr.json();
-      const rc = await fetch('/api/produtos/' + encodeURIComponent(id) + '/comparacao');
-      if (rc.ok) comparacao = await rc.json();   // 404 = não há duas versões concluídas: a seção não aparece
-      const rg = await fetch('/api/produtos/' + encodeURIComponent(id) + '/registros');
-      if (rg.ok) registros = await rg.json();
-    } catch (e) {
-      caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro'));
-      return;
+  // Barra fixa no fim do detalhe: a decisão sempre à vista. Só uma pessoa decide.
+  function barraDecisao(d) {
+    const barra = el('form', null, 'decisao');
+    const linha = el('div', null, 'linha');
+    const seg = el('div', null, 'segmentos');
+    seg.setAttribute('role', 'group');
+    seg.setAttribute('aria-label', 'Decisão');
+    for (const [valor, nome] of Object.entries(NOMES_DECISAO)) {
+      const b = el('button', nome);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(valor === decisaoEscolhida));
+      b.addEventListener('click', () => {
+        decisaoEscolhida = valor;
+        seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        motivo.focus();
+      });
+      seg.appendChild(b);
     }
-    desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros);
-    atualizarFila();
-  }
-
-  function desenharDetalhe(caixa, d, versoes, relatorio, comparacao, registros) {
-    caixa.replaceChildren();
-    const a = d.auditoria;
-    const cab = el('div', null, 'cabecalho');
-    cab.appendChild(el('h2', d.id + (d.nome && d.nome !== d.id ? ' — ' + d.nome : '')));
-    cab.appendChild(etiqueta(d.origem, 'origem'));
-    cab.appendChild(el('span', 'versão ' + a.versao + ' · ' + a.status + ' · produto ' + (d.status || '—'), 'motivo'));
-    caixa.appendChild(cab);
-    if (d.origem === 'SIMULADO') caixa.appendChild(el('p', 'Produto fictício (dados simulados).', 'motivo'));
-    if (a.motivoFalha) caixa.appendChild(el('p', 'Motivo: ' + a.motivoFalha, 'erro'));
-
-    // Ações do pipeline
-    const acoes = el('div', null, 'painel');
-    if (a.status === 'EM_ANALISE' || a.status === 'FALHOU') {
-      const b = el('button', 'Processar (roda a IA nesta versão)');
-      b.addEventListener('click', () => acao(b, '/api/produtos/' + encodeURIComponent(d.id) + '/processar', null, 'Processamento agendado.'));
-      acoes.appendChild(b);
-      if (d.origem === 'REAL') acoes.appendChild(el('span', 'Páginas reais só passam pela IA por este botão (as RESERVADO só depois do congelamento).', 'motivo'));
-    }
-    if (d.origem === 'SIMULADO' && COM_REENVIO.has(d.id)) {
-      const b = el('button', 'Reenviar versão corrigida (simulado)', 'secundario');
-      b.addEventListener('click', () => acao(b, '/api/simulador/reenviar/' + encodeURIComponent(d.id), null, 'Versão corrigida enviada.'));
-      acoes.appendChild(b);
-    }
-    acoes.appendChild(el('span', '', 'resultado'));
-    caixa.appendChild(acoes);
-
-    // Pontuação e a conta
-    if (a.pontuacao != null) {
-      const p = el('div', null, 'cabecalho');
-      p.appendChild(el('span', String(a.pontuacao), 'pontos'));
-      p.appendChild(etiqueta(a.faixa, 'faixa'));
-      const conta = d.conta.map(x => x.peso).join(' + ');
-      p.appendChild(el('span', d.conta.length ? 'conta: ' + conta + ' (cada tipo de achado conta uma vez; teto 100)' : 'nenhum achado', 'motivo'));
-      caixa.appendChild(p);
-    }
-    if (d.liberacaoSugerida) {
-      caixa.appendChild(el('p', 'Liberação sugerida: faixa BAIXA e nenhum achado de severidade alta. O sistema não libera sozinho: a decisão é sua.', 'sugestao-liberar'));
-    }
-    if (a.cruzamentoPulado) caixa.appendChild(el('p', 'Sem entrega cadastrada: o cruzamento com a entrega foi pulado.', 'motivo'));
-    if (a.status === 'CONCLUIDA') {
-      caixa.appendChild(el('p', d.afirmacoes.length + ' afirmações extraídas pela IA e conferidas · ' + d.afirmacoesDescartadas +
-        ' recusadas pelo código na extração · ' + d.descartesCruzamento + ' recusadas no cruzamento.', 'motivo'));
-    }
-
-    if (comparacao) caixa.appendChild(secaoComparacao(comparacao));
-
-    // Achados
-    caixa.appendChild(el('h3', 'Achados (' + d.achados.length + ')'));
-    if (d.achados.length === 0) caixa.appendChild(el('p', a.status === 'CONCLUIDA' ? 'Nenhum achado.' : 'Ainda não há achados.', 'motivo'));
-    for (const x of d.achados) caixa.appendChild(cartaoAchado(x, d.id));
-
-    // Página com trechos destacados e entrega
-    const colunas = el('div', null, 'colunas');
-    const c1 = el('div');
-    c1.appendChild(el('h3', 'Texto da página (trechos dos achados destacados)'));
-    c1.appendChild(paginaDestacada(d.paginaTexto || '', d.achados.map(x => x.evidenciaPagina).filter(Boolean)));
-    colunas.appendChild(c1);
-    const c2 = el('div');
-    c2.appendChild(el('h3', 'Entrega cadastrada (' + d.entrega.length + ' itens)'));
-    if (d.entrega.length === 0) c2.appendChild(el('p', 'Sem entrega cadastrada.', 'motivo'));
-    const lista = el('ul');
-    const trechosEntrega = d.achados.map(x => x.evidenciaEntrega).filter(Boolean);
-    for (const i of d.entrega) {
-      const li = el('li');
-      li.appendChild(el('b', i.tipo + ' '));
-      li.appendChild(document.createTextNode(i.titulo));
-      if (i.descricao) { li.appendChild(document.createTextNode(' — ')); li.appendChild(destacar(i.descricao, trechosEntrega)); }
-      lista.appendChild(li);
-    }
-    c2.appendChild(lista);
-    colunas.appendChild(c2);
-    caixa.appendChild(colunas);
-
-    // Versões
-    caixa.appendChild(el('h3', 'Versões'));
-    const tv = el('table');
-    const cabv = el('tr');
-    ['Versão', 'Auditoria', 'Pontuação', 'Tipos de achado', 'Criada em'].forEach(t => cabv.appendChild(el('th', t)));
-    tv.appendChild(cabv);
-    for (const v of versoes) {
-      const tr = el('tr');
-      tr.appendChild(celula(String(v.versao), 'num'));
-      tr.appendChild(celula(v.status));
-      tr.appendChild(celula(v.pontuacao == null ? '—' : v.pontuacao + ' (' + v.faixa + ')', 'num'));
-      tr.appendChild(celula(v.tiposDeAchado.join(', ') || '—'));
-      tr.appendChild(celula(dataHora(v.criadaEm)));
-      tv.appendChild(tr);
-    }
-    caixa.appendChild(tv);
-
-    caixa.appendChild(secaoRegistros(registros));
-
-    // Relatório
-    caixa.appendChild(el('h3', 'Relatório ao produtor (envio simulado)'));
-    caixa.appendChild(relatorio ? el('pre', relatorio.conteudo, 'relatorio') : el('p', 'Ainda não há relatório.', 'motivo'));
-
-    // Decisão
-    caixa.appendChild(el('h3', 'Decisão (só uma pessoa decide)'));
-    for (const dec of d.decisoes) {
-      caixa.appendChild(el('p', dataHora(dec.data) + ' — ' + NOMES_DECISAO[dec.decisao] + ': ' + dec.motivo, 'motivo'));
-    }
-    const form = el('form');
-    const sel = el('select');
-    sel.setAttribute('aria-label', 'Decisão');
-    Object.entries(NOMES_DECISAO).forEach(([v, t]) => { const o = el('option', t); o.value = v; sel.appendChild(o); });
     const motivo = el('textarea');
-    motivo.placeholder = 'Motivo (obrigatório)';
+    motivo.placeholder = 'Motivo da decisão';
+    motivo.setAttribute('aria-label', 'Motivo da decisão');
     motivo.required = true;
-    const enviar = el('button', 'Registrar decisão');
+    const enviar = el('button', 'Registrar decisão', 'botao destaque');
     enviar.type = 'submit';
-    const saida = el('span', '', 'resultado');
-    form.append(sel, motivo, enviar, saida);
-    form.addEventListener('submit', async (e) => {
+    linha.append(seg, motivo, enviar);
+    barra.appendChild(linha);
+    barra.addEventListener('submit', async (e) => {
       e.preventDefault();
-      await acao(enviar, '/api/produtos/' + encodeURIComponent(d.id) + '/decisao',
-        { decisao: sel.value, motivo: motivo.value }, 'Decisão registrada.');
+      if (!decisaoEscolhida) { avisar('Escolha Liberar, Pedir ajuste ou Escalar.', true); return; }
+      const ok = await acao(enviar, '/api/produtos/' + encodeURIComponent(d.id) + '/decisao',
+        { decisao: decisaoEscolhida, motivo: motivo.value }, 'Decisão registrada: ' + NOMES_DECISAO[decisaoEscolhida] + '.');
+      if (ok) { decisaoEscolhida = null; if (abaDetalhe === 'alertas') abaDetalhe = 'historico'; }
     });
-    caixa.appendChild(form);
-  }
-
-  function cartaoAchado(x, produtoId) {
-    const c = el('div', null, 'achado sev-' + x.severidade);
-    const t = el('div', null, 'cabecalho');
-    t.appendChild(el('span', x.regraDescricao || x.regra, 'titulo'));
-    t.appendChild(etiqueta(x.severidade, 'sev'));
-    t.appendChild(el('span', 'peso ' + x.peso, 'motivo'));
-    t.appendChild(etiqueta(x.estado, 'estado'));
-    c.appendChild(t);
-    if (x.evidenciaPagina) { const p = el('div', 'Página: '); p.appendChild(el('span', x.evidenciaPagina, 'trecho')); c.appendChild(p); }
-    if (x.evidenciaEntrega) { const p = el('div', 'Entrega: '); p.appendChild(el('span', x.evidenciaEntrega, 'trecho')); c.appendChild(p); }
-    if (x.detalhe) c.appendChild(el('div', x.detalhe, 'motivo'));
-    if (x.sugestao) {
-      const s = el('div', 'Sugestão ao produtor (' + (x.sugestaoFonte === 'IA' ? 'redigida pela IA e conferida' : 'texto padrão') + '): ');
-      s.appendChild(el('span', x.sugestao));
-      c.appendChild(s);
-    }
-    const b = el('div', null, 'painel');
-    const confirmar = el('button', 'Confirmar', 'pequeno');
-    const descartar = el('button', 'Descartar', 'pequeno secundario');
-    confirmar.addEventListener('click', () => revisar(x.id, 'CONFIRMADO', produtoId, confirmar));
-    descartar.addEventListener('click', () => revisar(x.id, 'DESCARTADO', produtoId, descartar));
-    b.append(confirmar, descartar);
-    c.appendChild(b);
-    return c;
+    return barra;
   }
 
   async function revisar(achadoId, decisao, produtoId, botao) {
     botao.disabled = true;
     try {
-      const r = await fetch('/api/achados/' + achadoId + '/revisao', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decisao: decisao })
-      });
-      if (r.ok) abrirDetalhe(produtoId);
+      const r = await postar('/api/achados/' + achadoId + '/revisao', { decisao: decisao });
+      if (r.ok) { avisar(decisao === 'CONFIRMADO' ? 'Alerta confirmado.' : 'Alerta descartado.'); abrirDetalhe(produtoId); }
+      else avisar(await mensagemDeErro(r), true);
+    } catch (e) {
+      avisar('Não foi possível falar com o servidor.', true);
     } finally { botao.disabled = false; }
   }
 
   async function acao(botao, url, corpo, ok) {
-    const saida = botao.parentElement.querySelector('.resultado');
     botao.disabled = true;
     try {
-      const r = await fetch(url, corpo ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }
-                                       : { method: 'POST' });
-      if (!r.ok) { if (saida) { saida.textContent = await mensagemDeErro(r); saida.classList.add('erro'); } return; }
-      if (saida) saida.textContent = ok;
-      setTimeout(() => abrirDetalhe(selecionado), 800);
+      const r = await postar(url, corpo);
+      if (!r.ok) { avisar(await mensagemDeErro(r), true); return false; }
+      avisar(ok);
+      setTimeout(() => { abrirDetalhe(selecionado); atualizarFila(); }, 800);
+      return true;
     } catch (e) {
-      if (saida) { saida.textContent = 'Não foi possível falar com o servidor.'; saida.classList.add('erro'); }
+      avisar('Não foi possível falar com o servidor.', true);
+      return false;
     } finally { botao.disabled = false; }
   }
 
@@ -541,43 +865,46 @@
     return div;
   }
 
-  // ---------- Botões do topo ----------
-  document.getElementById('botao-simulador').addEventListener('click', async () => {
+  // ---------- Demonstração ----------
+  async function iniciarSimulador() {
     const botao = document.getElementById('botao-simulador');
     botao.disabled = true;
     try {
-      const r = await fetch('/api/simulador/iniciar', { method: 'POST' });
-      if (r.status === 409) mostrar('resultado-simulador', 'O simulador já está rodando.', true);
-      else if (!r.ok) mostrar('resultado-simulador', 'Erro: ' + await mensagemDeErro(r), true);
-      else { const j = await r.json(); mostrar('resultado-simulador', j.eventosAgendados + ' eventos simulados agendados.'); }
+      const r = await postar('/api/simulador/iniciar');
+      if (r.status === 409) avisar('O simulador já está rodando.', true);
+      else if (!r.ok) avisar('Erro: ' + await mensagemDeErro(r), true);
+      else {
+        const j = await r.json();
+        avisar('Produtos a caminho da fila.');
+        irPara('fila');
+        atualizarFila();
+      }
     } catch (e) {
-      mostrar('resultado-simulador', 'Não foi possível falar com o servidor.', true);
+      avisar('Não foi possível falar com o servidor.', true);
     } finally { botao.disabled = false; }
-  });
+  }
+  document.getElementById('botao-simulador').addEventListener('click', iniciarSimulador);
 
   document.getElementById('form-link').addEventListener('submit', async (evento) => {
     evento.preventDefault();
     const botao = document.getElementById('botao-link');
     const url = document.getElementById('url').value.trim();
     botao.disabled = true;
-    mostrar('resultado-link', 'Coletando a página… (pode levar alguns segundos)');
+    avisar('Coletando a página…');
     try {
-      const resposta = await fetch('/api/eventos/produto-enviado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'PRODUTO_ENVIADO', entrada: 'LINK', produto: { url: url, origem: 'REAL' } })
-      });
-      if (resposta.status === 400) { mostrar('resultado-link', 'Pedido inválido: confira se a URL começa com http:// ou https://.', true); return; }
-      if (!resposta.ok) { mostrar('resultado-link', 'Erro no servidor (HTTP ' + resposta.status + ').', true); return; }
+      const resposta = await postar('/api/eventos/produto-enviado',
+        { tipo: 'PRODUTO_ENVIADO', entrada: 'LINK', produto: { url: url, origem: 'REAL' } });
+      if (resposta.status === 400) { avisar('Confira se o link começa com http:// ou https://.', true); return; }
+      if (!resposta.ok) { avisar('Erro no servidor (HTTP ' + resposta.status + ').', true); return; }
       const r = await resposta.json();
-      if (r.resultado === 'IGNORADO_MESMO_HASH') {
-        mostrar('resultado-link', r.produtoId + ': página igual à da última auditoria; nada a fazer.');
-      } else {
-        mostrar('resultado-link', r.produtoId + ': auditoria versão ' + r.versao + ' — ' + r.statusAuditoria + '.', r.statusAuditoria === 'FALHOU');
-      }
-      atualizarFila();
+      if (r.resultado === 'IGNORADO_MESMO_HASH') avisar(r.produtoId + ': página igual à da última auditoria.');
+      else avisar(r.produtoId + ': ' + (NOMES_STATUS_AUDITORIA[r.statusAuditoria] || r.statusAuditoria) + '.', r.statusAuditoria === 'FALHOU');
+      document.getElementById('url').value = '';
+      irPara('fila');
+      await atualizarFila();
+      abrirDetalhe(r.produtoId);
     } catch (e) {
-      mostrar('resultado-link', 'Não foi possível falar com o servidor.', true);
+      avisar('Não foi possível falar com o servidor.', true);
     } finally {
       botao.disabled = false;
     }
@@ -587,18 +914,19 @@
     const botao = document.getElementById('botao-lote');
     botao.disabled = true;
     try {
-      const resposta = await fetch('/api/lote/urls', { method: 'POST' });
-      if (resposta.status === 409) mostrar('resultado-lote', 'Já existe um lote em andamento.', true);
-      else if (resposta.status === 404) mostrar('resultado-lote', 'Arquivo data/real/urls.txt não encontrado.', true);
-      else if (!resposta.ok) mostrar('resultado-lote', 'Erro no servidor (HTTP ' + resposta.status + ').', true);
+      const resposta = await postar('/api/lote/urls');
+      if (resposta.status === 409) avisar('Já existe um lote em andamento.', true);
+      else if (resposta.status === 404) avisar('Arquivo data/real/urls.txt não encontrado.', true);
+      else if (!resposta.ok) avisar('Erro no servidor (HTTP ' + resposta.status + ').', true);
       else {
         const r = await resposta.json();
         let texto = r.eventosAgendados + ' links agendados, um a cada ' + (r.intervaloMs / 1000) + ' s.';
-        if (r.linhasInvalidas.length > 0) texto += ' Linhas ignoradas (formato inválido): ' + r.linhasInvalidas.join(', ') + '.';
-        mostrar('resultado-lote', texto, false);
+        if (r.linhasInvalidas.length > 0) texto += ' Ignoradas: ' + r.linhasInvalidas.join(', ') + '.';
+        avisar(texto);
+        irPara('fila');
       }
     } catch (e) {
-      mostrar('resultado-lote', 'Não foi possível falar com o servidor.', true);
+      avisar('Não foi possível falar com o servidor.', true);
     } finally {
       botao.disabled = false;
     }
@@ -609,17 +937,19 @@
   function tabelaMetricas(linhas) {
     const t = el('table');
     const c = el('tr');
-    ['Sistema', 'Acertos (VP)', 'Falsos positivos', 'Não achados (FN)', 'Precisão', 'Cobertura', 'F1'].forEach(x => c.appendChild(el('th', x)));
+    ['Sistema', 'Acertos', 'Falsos positivos', 'Não achados', 'Precisão', 'Cobertura', 'F1'].forEach(x => c.appendChild(el('th', x)));
     t.appendChild(c);
     for (const [nome, m] of linhas) {
       const tr = el('tr');
       tr.appendChild(celula(nome));
-      if (!m) { const td = celula('não medido'); td.colSpan = 6; tr.appendChild(td); }
+      if (!m) { const td = celula('não medido', 'suave'); td.colSpan = 6; tr.appendChild(td); }
       else [m.vp, m.fp, m.fn].forEach(v => tr.appendChild(celula(String(v), 'num')));
       if (m) [m.precisao, m.cobertura, m.f1].forEach(v => tr.appendChild(celula(pct(v), 'num')));
       t.appendChild(tr);
     }
-    return t;
+    const rx = el('div', null, 'rolagem-x');
+    rx.appendChild(t);
+    return rx;
   }
   document.getElementById('botao-comparativo').addEventListener('click', async () => {
     const caixa = document.getElementById('comparativo');
@@ -627,42 +957,65 @@
     let c;
     try {
       const r = await fetch('/api/avaliacao/comparativo?divisao=' + divisao);
-      if (!r.ok) { caixa.replaceChildren(el('p', await mensagemDeErro(r), 'erro')); return; }
+      if (!r.ok) { caixa.replaceChildren(el('p', await mensagemDeErro(r), 'barra erro')); return; }
       c = await r.json();
-    } catch (e) { caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'erro')); return; }
+    } catch (e) { caixa.replaceChildren(el('p', 'Não foi possível falar com o servidor.', 'barra erro')); return; }
     caixa.replaceChildren();
+    const grade = el('div', null, 'grade-comparativo');
+
+    const cr = el('div', null, 'cartao');
+    const hr = el('h2', 'Teste A · extração de promessas ');
+    hr.append(etiqueta('Real', 'origem-REAL'), etiqueta(divisao === 'RESERVADO' ? 'Reservado' : 'Desenvolvimento'));
+    cr.appendChild(hr);
     const r = c.real;
-    caixa.appendChild(el('h3', 'REAL — teste A: extração de afirmações (' + divisao + ')'));
-    if (!r) caixa.appendChild(el('p', 'não medido', 'motivo'));
+    if (!r) cr.appendChild(el('p', 'não medido', 'suave'));
     else {
-      caixa.appendChild(el('p', 'Páginas medidas: ' + (r.paginasMedidas.join(', ') || 'nenhuma') +
-        ' · sem saída da IA: ' + (r.paginasSemSaidaDaIa.join(', ') || 'nenhuma') + ' · ' + r.afirmacoesNoGabarito +
-        ' afirmações do gabarito nessas páginas' + (r.incluiOutro ? '' : ' (' + r.outroForaDaConta + ' do tipo OUTRO fora da conta)') + '.', 'motivo'));
-      caixa.appendChild(tabelaMetricas([['Baseline', r.baseline], ['YouAudit', r.youaudit]]));
-      caixa.appendChild(el('p', 'Agrupadas (pedaços de um item do gabarito já acertado; não contam como acerto nem como erro): baseline ' +
-        r.agrupadasBaseline + ', YouAudit ' + r.agrupadasYouaudit + '.', 'motivo'));
+      cr.appendChild(tabelaMetricas([['Baseline', r.baseline], ['YouAudit', r.youaudit]]));
       const total = r.trechosAceitos + r.trechosRecusados;
-      caixa.appendChild(el('p', 'Trechos literais válidos (YouAudit): ' + r.trechosAceitos + ' de ' + total +
-        (total ? ' (' + pct(r.trechosAceitos / total) + ')' : ''), 'motivo'));
-      caixa.appendChild(el('p', 'Achados em páginas reais (B1/B2): ' + r.achadosB1B2, 'motivo'));
+      cr.appendChild(el('p', 'Trechos literais válidos (YouAudit): ' + r.trechosAceitos + ' de ' + total +
+        (total ? ' (' + pct(r.trechosAceitos / total) + ')' : '') + ' · achados em páginas reais (B1/B2): ' + r.achadosB1B2, 'pequeno-texto'));
+      cr.appendChild(ajuda('Páginas medidas: ' + (r.paginasMedidas.join(', ') || 'nenhuma') + '. Sem saída da IA: ' +
+        (r.paginasSemSaidaDaIa.join(', ') || 'nenhuma') + '. ' + r.afirmacoesNoGabarito + ' afirmações do gabarito nessas páginas' +
+        (r.incluiOutro ? '' : ' (' + r.outroForaDaConta + ' do tipo OUTRO fora da conta)') + '. Agrupadas (pedaços de um item do ' +
+        'gabarito já acertado; não contam como acerto nem como erro): baseline ' + r.agrupadasBaseline + ', YouAudit ' + r.agrupadasYouaudit + '.'));
     }
+    grade.appendChild(cr);
+
+    const cs = el('div', null, 'cartao');
+    const hs = el('h2', 'Teste B3 · divergências plantadas ');
+    hs.appendChild(etiqueta('Simulado', 'origem-SIMULADO'));
+    cs.appendChild(hs);
     const s = c.simulado;
-    caixa.appendChild(el('h3', 'SIMULADO — teste B3: divergências plantadas em produtos fictícios'));
-    caixa.appendChild(el('p', 'Prova o funcionamento técnico, não uma divergência real.', 'motivo'));
-    if (!s) caixa.appendChild(el('p', 'não medido', 'motivo'));
+    if (!s) cs.appendChild(el('p', 'não medido', 'suave'));
     else {
-      caixa.appendChild(el('p', 'Produtos medidos: ' + s.produtosMedidos.length + ' · sem auditoria concluída: ' +
-        (s.produtosSemAuditoriaConcluida.join(', ') || 'nenhum'), 'motivo'));
-      caixa.appendChild(tabelaMetricas([['Baseline', s.baseline], ['YouAudit', s.youaudit]]));
-      caixa.appendChild(el('p', 'Só o YouAudit encontrou: ' + s.soYouAudit.length +
-        (s.soYouAudit.length ? ' (' + s.soYouAudit.map(x => x.produtoId + ' ' + x.tipo).join('; ') + ')' : '') +
-        ' · só o baseline encontrou: ' + s.soBaseline.length +
-        (s.soBaseline.length ? ' (' + s.soBaseline.map(x => x.produtoId + ' ' + x.tipo).join('; ') + ')' : ''), 'motivo'));
+      cs.appendChild(tabelaMetricas([['Baseline', s.baseline], ['YouAudit', s.youaudit]]));
+      cs.appendChild(el('p', 'Só o YouAudit encontrou: ' + s.soYouAudit.length + ' · só o baseline encontrou: ' + s.soBaseline.length, 'pequeno-texto'));
+      cs.appendChild(ajuda('Prova o funcionamento técnico, não uma divergência real. Produtos medidos: ' + s.produtosMedidos.length +
+        '. Sem auditoria concluída: ' + (s.produtosSemAuditoriaConcluida.join(', ') || 'nenhum') + '.' +
+        (s.soYouAudit.length ? ' Só o YouAudit: ' + s.soYouAudit.map(x => x.produtoId + ' ' + nomeAlerta(x.tipo)).join('; ') + '.' : '') +
+        (s.soBaseline.length ? ' Só o baseline: ' + s.soBaseline.map(x => x.produtoId + ' ' + nomeAlerta(x.tipo)).join('; ') + '.' : '')));
     }
-    for (const a of c.avisos) caixa.appendChild(el('p', 'Aviso: ' + a, 'motivo'));
+    grade.appendChild(cs);
+    caixa.appendChild(grade);
+
+    if (c.avisos.length) {
+      const av = el('div', null, 'cartao');
+      av.style.cssText = 'padding:12px 18px;margin-top:16px';
+      for (const a of c.avisos) av.appendChild(el('p', a, 'suave pequeno-texto'));
+      caixa.appendChild(av);
+    }
   });
 
+  // ---------- Início ----------
+  // Link direto: #produto=sim-017&aba=mudancas abre o produto já na aba.
+  const inicio = new URLSearchParams(location.hash.slice(1));
+  detalheVazio();
   atualizarFila();
+  if (inicio.get('produto')) {
+    abaDetalhe = inicio.get('aba') || 'alertas';
+    selecionado = inicio.get('produto');
+    abrirDetalhe(selecionado);
+  }
   setInterval(atualizarFila, 3000);
 </script>
 </body>
