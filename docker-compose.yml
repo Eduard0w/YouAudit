@@ -3,6 +3,16 @@
 #   cp ambiente.exemplo .env      # e preencha GROQ_API_KEY e DOMINIO (o .env nunca vai para o Git)
 #   docker compose up -d --build
 # Logs: docker compose logs -f app      Parar: docker compose down (os dados ficam no volume)
+#
+# Limites (VM Always Free): no máximo 1,5 GB de RAM para a aplicação + 256 MB para o proxy (< 2 GB no total), sem
+# usar swap além disso; logs de cada contêiner com no máximo 3 arquivos de 10 MB, para não encher o disco.
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
 
 services:
   app:
@@ -23,7 +33,9 @@ services:
     # Sem "ports": a aplicação só é alcançada pelo proxy abaixo.
     expose:
       - "8080"
-    mem_limit: ${LIMITE_MEMORIA:-768m}
+    mem_limit: ${LIMITE_MEMORIA:-1536m}
+    memswap_limit: ${LIMITE_MEMORIA:-1536m}
+    <<: *logs
 
   proxy:
     image: caddy:2
@@ -39,6 +51,9 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-dados:/data
+    mem_limit: 256m
+    memswap_limit: 256m
+    <<: *logs
 
 volumes:
   youaudit-dados:

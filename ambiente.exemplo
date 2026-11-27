@@ -2,5 +2,5 @@
 GROQ_API_KEY=
 # Nome do DuckDNS (ex.: youaudit.duckdns.org): o Caddy gera HTTPS sozinho. Vazio = HTTP pelo IP.
 DOMINIO=
-# Limite de memória do Java. VM AMD de 1 GB: 768m. VM ARM (Ampere): pode subir para 1g ou mais.
-LIMITE_MEMORIA=768m
+# Limite de memória da aplicação (o proxy tem mais 256 MB fixos). 1536m mantém o total abaixo de 2 GB.
+LIMITE_MEMORIA=1536m
