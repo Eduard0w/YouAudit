@@ -109,6 +109,30 @@ Dá para abrir um produto direto pelo endereço, por exemplo `http://localhost:8
 
 ## Estrutura
 
+Caminho de uma auditoria, do evento até a decisão da pessoa (entre parênteses, o pacote responsável):
+
+```mermaid
+flowchart TD
+    A["Evento 'produto enviado para aprovação'<br/>simulador ou 'Auditar um link' (simulador, web)"] --> B["Texto da página<br/>link: coleta com robots.txt, proteção contra SSRF e limpeza do HTML<br/>simulado: texto do arquivo (coleta)"]
+    B --> C{"Hash da página igual ao<br/>da última auditoria? (evento)"}
+    C -- sim --> C1["Evento ignorado<br/>(nada é refeito)"]
+    C -- não --> D["Extração das promessas pela IA<br/>(extracao)"]
+    D --> E{"Esquema válido e trecho<br/>literal existe na página?"}
+    E -- "não, após 1 nova tentativa" --> E1["Afirmação descartada<br/>e motivo registrado"]
+    E -- sim --> F["Regras determinísticas<br/>termos proibidos, quantidades, ressalvas (regras)"]
+    E -- sim --> G["Cruzamento com a entrega<br/>IA associa, código confere o trecho (entrega)"]
+    F --> H["Pontuação de risco e faixa<br/>BAIXA, MEDIA, ALTA (pontuacao)"]
+    G --> H
+    H --> I["Sugestões de correção<br/>IA redige, código confere os números (redacao)"]
+    I --> J["Fila de revisão ordenada pela pontuação<br/>(revisao)"]
+    I --> K["Relatório ao produtor<br/>(envio simulado)"]
+    J --> L(["Pessoa de Operações decide:<br/>liberar, pedir ajuste ou escalar"])
+    L -- pedir ajuste --> M["Produtor reenvia versão corrigida"] --> B
+```
+
+O comparativo (`avaliacao` e `baseline`) roda à parte: passa o mesmo conjunto pelo verificador convencional e pelo
+YouAudit e conta os acertos de cada um.
+
 Pacotes em `src/main/java/br/com/youaudit/`: `evento` (gatilho, idempotência por hash, pipeline), `coleta` (coleta
 de página com robots.txt e proteção contra SSRF), `extracao` (IA, validação de esquema e de trecho literal, cache),
 `regras`, `entrega` (cruzamento com o conteúdo entregue), `pontuacao`, `redacao`, `revisao` (fila e decisões),
